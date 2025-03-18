@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
+import { Input } from "@/components/ui/input"
 function DemoPage() {
   return (
     <div>
@@ -29,6 +29,7 @@ function DatePickerDemo() {
     <div className="flex flex-col items-start gap-4 md:flex-row">
       <DatePickerSimple />
       <DatePickerWithRange />
+      <Input />
     </div>
   )
 }
@@ -42,7 +43,7 @@ function DatePickerSimple() {
         <Button
           variant={"outline"}
           className={cn(
-            "min-w-[200px] justify-start px-2 font-normal",
+            "min-w-[200px] justify-start px-2 font-normal text-primary",
             !date && "text-muted-foreground"
           )}
         >
@@ -79,7 +80,7 @@ function DatePickerWithRange() {
             !date && "text-muted-foreground"
           )}
         >
-          <CalendarIcon className="text-muted-foreground" />
+          <CalendarIcon className="text-muted-foreground text-primary" />
           {date?.from ? (
             date.to ? (
               <>
