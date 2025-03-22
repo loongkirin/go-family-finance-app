@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ActiveThemeProvider } from "@/components/active-theme";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { ActiveThemeProvider } from "@/providers/active-theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 import { fontVariables } from "@/lib/fonts";
 import { META_THEME_COLORS, siteConfig } from "@/config/site"
+import { QueryProvider } from "@/providers/query-provider";
 
 export const metadata: Metadata = {
   title: {
@@ -62,7 +63,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <ActiveThemeProvider initialTheme={activeThemeValue}>
-            {children}
+            <QueryProvider>
+              {children}
+            </QueryProvider>
             <Toaster/>
           </ActiveThemeProvider>
         </ThemeProvider>
