@@ -1,7 +1,7 @@
 "use client"
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import useCaptcha from '@/hooks/useCaptcha'
+import useCaptcha from '@/hooks/use-captcha'
 import React from 'react'
 import Image from 'next/image'
 const page = () => {

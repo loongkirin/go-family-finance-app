@@ -1,8 +1,35 @@
+"use client"
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import axios from "@/lib/axios"
+
+const fetchCaptcha = async () => {
+  try {
+      const res = await axios.post("/auth/register", { "data": {
+        phone: "18611485593",
+        password: "123456",
+        captcha_id: "G1Va4KZoot0UCsGOTnRq",
+        captcha: "8976",
+        user_name: "jack",
+        email: "18611485593@163.com",
+        tenant_name: "Jack's Family",
+      }})
+      const result = res.data;
+      console.log(result);
+      if (result.code !== 200) {
+          return;
+      }
+      const data = result.result.data;
+      console.log("data", data);
+  } catch (err) {
+      console.log(err);
+  } finally {
+  }
+}
 
 export function LoginForm({
   className,
@@ -93,6 +120,7 @@ export function LoginForm({
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
+          <Button onClick={fetchCaptcha}>fetchCaptcha</Button>
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

@@ -1,8 +1,8 @@
 import axios from 'axios';
+import { siteConfig } from '@/config/site'
 
 const RestApi = axios.create({
-  // baseURL: process.env.REST_API_URL,
-  baseURL: "/api/v1",
+  baseURL: siteConfig.baseApiUrl,
   headers: { "Content-Type": "application/json" },
 });
 

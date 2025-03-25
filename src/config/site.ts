@@ -6,7 +6,8 @@ export const siteConfig = {
   links: {
     github: "https://github.com/loongkirin/go-family-finance-app",
   },
-  themeKey: "active_theme"
+  themeKey: "active_theme",
+  baseApiUrl: "/api/v1",
 }
 
 export type SiteConfig = typeof siteConfig
