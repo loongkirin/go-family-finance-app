@@ -1,10 +1,3 @@
-import Image from "next/image";
-import { SiteFooter } from "@/components/site-footer";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { NavHeader } from "@/components/nav-header";
-import { ModeSwitcher } from "@/components/mode-switcher";
-import { ThemeSelector } from "@/components/theme-selector";
 
 export default function Home() {
   return (

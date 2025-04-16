@@ -10,7 +10,7 @@ RestApi.interceptors.request.use(
   (config) => {
     console.log("request", config);
     // Add auth token or other headers here
-    const token = localStorage.getItem("token");
+    const token = localStorage?.getItem("token")??'';
     if (token && token.length > 0) {
       config.headers.Authorization = `Bearer ${token}`;
       // config.headers["x-authorization"] =`x-bearer ${token}`;

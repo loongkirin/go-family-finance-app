@@ -5,40 +5,54 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import axios from "@/lib/axios"
 import { useRouter } from "next/navigation"
-
-
-const fetchCaptcha = async () => {
-  try {
-      localStorage.setItem("token", "HZhV9NSrVtuDHvNQ0kv4");
-      const res = await axios.post("/auth/register11", { "data": {
-        phone: "18611485593",
-        password: "123456",
-        captcha_id: "HZhV9NSrVtuDHvNQ0kv4",
-        captcha_value: "9959",
-        user_name: "jack",
-        email: "18611485593@163.com",
-        tenant_name: "Jack's Family",
-      }})
-      const result = res.data;
-      console.log(result);
-      if (result.code !== 200) {
-          return;
-      }
-      const data = result.result.data;
-      console.log("data", data);
-  } catch (err) {
-      console.log(err);
-  } finally {
-  }
-}
+import Link from "next/link"
+import { Captcha } from "@/components/captcha"
+import useCaptcha from "@/hooks/use-captcha"
+import { useRef } from "react";
+import { accountApi, LoginRequest } from "@/features/accounts/api/account";
+import {toast} from "sonner"
+import { useMutation } from "@tanstack/react-query";
+import Image from "next/image";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const { captchaData, isLoading, errorMessage, fetchCaptcha } = useCaptcha();
+  const ref = useRef<HTMLInputElement>(null);
+
+  const mutation = useMutation({
+    mutationFn: (data: LoginRequest) => {
+      return accountApi.signIn(data);
+    },
+    onSuccess: (data) => {
+      // console.log("login success", data);
+      if(data.code === 200) {
+        router.push("/demo")
+      } else {
+        fetchCaptcha();
+        toast.error(data.message || "Error occured while logging, please try again later")
+      }
+    },
+    onError: (error) => {
+      console.log("login error", error);
+      fetchCaptcha();
+      toast.error("Error occured while logging, please try again later")
+    }
+  })
+
+  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    mutation.mutate({ 
+      email: "18611485593@163.com", 
+      phone: "18611485593", 
+      password: "123456", 
+      captcha_value: ref.current?.value??'', 
+      captcha_id: captchaData?.captcha_id??'' 
+    });
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
@@ -72,9 +86,17 @@ export function LoginForm({
                 </div>
                 <Input id="password" type="password" required />
               </div>
-              <Button type="submit" className="w-full" onClick={() => {
-                router.push("/demo");
-              }}>
+              <div className="grid gap-3">
+                <Captcha 
+                  isLoading={isLoading} 
+                  errorMessage={errorMessage} 
+                  captchaData={captchaData} 
+                  fetchCaptcha={fetchCaptcha} 
+                  imageSize="md"
+                  ref={ref}
+                />
+              </div>
+              <Button type="submit" className="w-full" onClick={onSubmit}>
                 Login
               </Button>
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
@@ -84,17 +106,19 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <Link href="/account/register" className="underline underline-offset-4">
                   Sign up
-                </a>
+                </Link>
               </div>
             </div>
           </form>
           <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
+            <Image
+              src="/images/login-bg.jpg"
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              width={1000}
+              height={1000}
             />
           </div>
         </CardContent>

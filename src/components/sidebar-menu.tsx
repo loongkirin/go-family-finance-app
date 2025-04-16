@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronRightIcon } from 'lucide-react'
-import { Label } from '@/components/ui/label'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 const MySidebarMenu = (props: { data: any }) => {
   return (
     <SidebarMenu className="w-[calc(100%-0.3rem)]">

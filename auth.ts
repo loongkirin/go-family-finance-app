@@ -8,8 +8,8 @@ export const {
   signOut,
 } = NextAuth({
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
+    signIn: "/account/login",
+    error: "/account/error",
   },
   events: {
     async linkAccount({ user }) {
@@ -17,8 +17,13 @@ export const {
     }
   },
   callbacks: {
-    async signIn({ user, account }) {
-      console.log("signIn", user, account);
+    // async signIn({ user, account }) {
+    //   console.log("signIn", user, account);
+
+    //   return true;
+    // },
+    async signIn(credentials) {
+      console.log("signIn", credentials);
 
       return true;
     },
@@ -26,10 +31,14 @@ export const {
       console.log("session", token, session);
       return session;
     },
-    async jwt({ token }) {
-      console.log("jwt", token);
-      return token;
-    }
+    // async jwt({ token }) {
+    //   console.log("jwt", token);
+    //   return token;
+    // }
+    async jwt(credentials) {
+      console.log("jwt", credentials);
+      return credentials;
+    },
   },
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,

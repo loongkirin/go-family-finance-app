@@ -66,7 +66,7 @@ export default async function RootLayout({
             <QueryProvider>
               {children}
             </QueryProvider>
-            <Toaster/>
+            <Toaster position="bottom-right" offset={{right: 5, bottom: 5}} duration={3000}/>
           </ActiveThemeProvider>
         </ThemeProvider>
       </body>
