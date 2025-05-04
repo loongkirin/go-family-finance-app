@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { fontVariables } from "@/lib/fonts";
 import { META_THEME_COLORS, siteConfig } from "@/config/site"
 import { QueryProvider } from "@/providers/query-provider";
+import { SessionProvider } from "@/providers/session-provider";
 
 export const metadata: Metadata = {
   title: {
@@ -63,10 +64,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <ActiveThemeProvider initialTheme={activeThemeValue}>
+            <SessionProvider>
             <QueryProvider>
               {children}
             </QueryProvider>
             <Toaster position="bottom-right" offset={{right: 5, bottom: 5}} duration={3000}/>
+            </SessionProvider>
           </ActiveThemeProvider>
         </ThemeProvider>
       </body>

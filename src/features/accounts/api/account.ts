@@ -1,7 +1,6 @@
 import axios from "@/lib/axios";
 import { z } from "zod";
-import { signIn } from "next-auth/react";
-import { auth } from "../../../../auth";
+import { signIn, useSession } from "next-auth/react";
 export const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
@@ -120,9 +119,9 @@ export const accountApi = {
         return response.data;
     },
 
-    getSession: async (): Promise<Response<User>> => {
-        const session = await auth();
+    getSessionUser:(): User => {
+        const session = useSession();
         console.log("getSession response", session);
-        return createResponse(200, "Get session successful", session?.user as User);
+        return session?.data?.user as User
     }
 };

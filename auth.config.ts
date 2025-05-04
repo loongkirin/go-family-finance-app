@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
 
 export default {
+  trustHost: true,  // 信任所有主机在上线服务Nginx时需要设置防止登录失败TLS拦截
   providers: [
     CredentialsProvider({
       async authorize(credentials, request) {
@@ -18,13 +19,14 @@ export default {
           }
         }
         const response = await axios.post("http://localhost:3000/api/v1/auth/login", loginRequest);
-        // console.log("login response", response);
+        console.log("login response", response);
         const result = response.data;
-        // console.log("login result", result);
+        console.log("login result", result);
         if(result.code !== 200) {
           console.log("login error", result.message);
           return Promise.reject(new Error(result.message || "Login failed"));
         }
+        console.log("login result.data", result.result.data)
         return result.result.data;
       }
     })

@@ -1,14 +1,13 @@
 "use client"
+
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { accountApi } from '@/features/accounts/api/account'
 import React from 'react'
-
+import { useAuth } from '@/hooks/use-auth'
 
 const page = () => {
-  const session = accountApi.getSession();
-  console.log("session", session);
-
+  const user = useAuth()
+  console.log("user---", user)
   return (
     <div>
       <TooltipProvider>

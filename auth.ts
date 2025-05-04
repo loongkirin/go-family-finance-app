@@ -28,7 +28,9 @@ export const {
       return true;
     },
     async session({ token, session }) {
-      console.log("session", token, session);
+      console.log("session-session", session);
+      console.log("session-token", token)
+      
       return session;
     },
     // async jwt({ token }) {
@@ -36,8 +38,13 @@ export const {
     //   return token;
     // }
     async jwt(credentials) {
-      console.log("jwt", credentials);
-      return credentials;
+      console.log("server--jwt", credentials);
+      const token = credentials.token;
+      console.log("server-jwt-user", credentials.user)
+      const user = credentials.user
+      token.name = user?.name
+      token.email = user?.email
+      return token;
     },
   },
   session: { strategy: "jwt" },

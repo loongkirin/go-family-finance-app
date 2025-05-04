@@ -44,6 +44,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import MySidebarMenu from "@/components/sidebar-menu"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // This is sample data.
 const data = {
@@ -215,12 +216,13 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const isMobile = useIsMobile()
   return (
+    <>
+      {isMobile &&  
+        <SidebarTrigger variant="outline" className="font-normal border-none outline-none transition mt-4 ml-4"  /> }
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarInset>
-          <SidebarTrigger className="ml-1.5" />
-        </SidebarInset>
         <SidebarGroup className="py-0 group-data-[collapsible=icon]:hidden">
           <SidebarGroupContent>
             <form className="relative">
@@ -317,8 +319,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <AvatarImage src="https://github.com/shadcn.png" />
           <AvatarFallback>CN</AvatarFallback>
         </Avatar>
+        {!isMobile && 
+          <SidebarInset>
+            <SidebarTrigger />
+          </SidebarInset> }       
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+    </>
   )
 }
