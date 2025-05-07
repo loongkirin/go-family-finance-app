@@ -1,6 +1,7 @@
 import { formOptions } from '@tanstack/react-form'
 import { z } from 'zod'
 import { format } from "date-fns"
+import { CaptchaSchema } from '@/types/ui-componet-types';
 
 export const PeopleSchema = z.object({
   fullName: z
@@ -27,7 +28,10 @@ export const PeopleSchema = z.object({
     fullName: z.string().min(1, "Emergency contact name is required"),
     phone: z.string().min(1, "Emergency contact phone is required"),
     framework: z.string(),
+    tech:z.string(),
+    tech2:z.string(),
   }),
+  captcha: CaptchaSchema,
 });
 
 type Peopele = z.infer<typeof PeopleSchema>
@@ -41,7 +45,7 @@ export const peopleFormOpts = formOptions({
     allow: false,
     agree: true,
     age: 20,
-    birthday: format(new Date(2014, 6, 2, 15), "yyyy-MM-dd"),
+    birthday: "",
     address: {
       line1: '',
       line2: undefined,
@@ -53,6 +57,12 @@ export const peopleFormOpts = formOptions({
       fullName: '',
       phone: '',
       framework: "",
+      tech: "",
+      tech2: "",
     },
+    captcha: {
+      captcha_id: "",
+      captcha_value: "",
+    }
   } as Peopele,
 })

@@ -3,18 +3,22 @@
 import { lazy } from "react"
 import { createFormHook } from "@tanstack/react-form"
 import { useFormContext, useFieldContext, fieldContext, formContext } from "@/hooks/use-form"
-import { FormCheckboxField, FormComboboxField, FormDatePickerField, FormField, FormNumberField, FormSubscribeButton, FormSwitchField, FormTextField } from "@/components/ui/form-component"
+import { FormCaptchaField, FormCheckboxField, FormComboboxField, FormDatePickerField, FormField, FormNumberField, FormRadioGroupField, FormSelectField, FormSubscribeButton, FormSwitchField, FormTextareaField, FormTextField } from "@/components/ui/form-component"
 
 
 const { useAppForm, withForm } = createFormHook({
   fieldComponents: {
+    FormField,
     FormTextField,
+    FormTextareaField,
     FormNumberField,
     FormCheckboxField,
     FormSwitchField,
     FormDatePickerField,
     FormComboboxField,
-    FormField,
+    FormSelectField,
+    FormRadioGroupField,
+    FormCaptchaField,
   },
   formComponents: {
     FormSubscribeButton,

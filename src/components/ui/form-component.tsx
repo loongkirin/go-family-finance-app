@@ -12,22 +12,18 @@ import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Switch } from "@/components/ui/switch"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import {  Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Textarea } from "@/components/ui/textarea"
 import { Combobox, ComboboxProps } from "@/components/ui/combobox"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Captcha } from "@/components/captcha"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { DropdownOption, Captcha as CaptchaValue } from "@/types/ui-componet-types"
+import useCaptcha from "@/hooks/use-captcha"
+
 
 function Form({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -138,6 +134,7 @@ type FormFieldProps = {
   }
   showLabel?: boolean,
   label?: string | undefined,
+  placeholder?: string | undefined,
   showError?: boolean,
 } & VariantProps<typeof fieldContentVariants>
 
@@ -225,7 +222,7 @@ function FormField<TData>({ classesName, render, showLabel = true, label, orient
 //   )
 // }
 
-function FormTextField({ classesName, label, showLabel=true, orientation, showError=true } : FormFieldProps) {
+function FormTextField({ classesName, label, showLabel=true, orientation, showError=true, placeholder } : FormFieldProps) {
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -241,7 +238,7 @@ function FormTextField({ classesName, label, showLabel=true, orientation, showEr
             value={field.state.value}
             onChange={(e) => field.handleChange(e.target.value)}
             onBlur={field.handleBlur}
-            placeholder=""
+            placeholder={placeholder}
           />
         </>
       )}
@@ -249,7 +246,32 @@ function FormTextField({ classesName, label, showLabel=true, orientation, showEr
   )
 }
 
-function FormNumberField({ classesName, label, showLabel=true, orientation, showError=true } : FormFieldProps) {
+function FormTextareaField({ classesName, label, showLabel=true, orientation, showError=true, placeholder } : FormFieldProps) {
+  return (
+    <FormField<string> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <>
+          <Textarea
+            id={field.name}
+            name={field.name}
+            value={field.state.value}
+            onChange={(e) => field.handleChange(e.target.value)}
+            onBlur={field.handleBlur}
+            placeholder={placeholder}
+            className={classesName?.content}
+          />
+        </>
+      )}
+    />
+  )
+}
+
+function FormNumberField({ classesName, label, showLabel=true, orientation, showError=true, placeholder } : FormFieldProps) {
   return (
     <FormField<number | undefined> 
       classesName={classesName} 
@@ -266,6 +288,7 @@ function FormNumberField({ classesName, label, showLabel=true, orientation, show
             value={field.state.value}
             onChange={(e) => field.handleChange(Number(e.target.value))}
             onBlur={field.handleBlur}
+            placeholder={placeholder}
           />
         </>
       )}
@@ -395,7 +418,9 @@ function FormSwitchField({ classesName, label, showLabel=true, orientation, show
 //   )
 // }
 
-function FormDatePickerField({ classesName, label, showLabel=true, orientation, showError=true } : FormFieldProps) {
+function FormDatePickerField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & {
+  defaultMonth?: Date, startMonth?: Date, endMonth?: Date
+}) {
   return (
     <FormField<boolean> 
       classesName={classesName} 
@@ -415,7 +440,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
                 )}
               >
                 <CalendarIcon />
-                {field.state.value ? format(field.state.value, "yyyy-MM-dd") : <span>Pick a date</span>}
+                {field.state.value ? format(field.state.value, "yyyy-MM-dd") : <span>{placeholder}</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -423,15 +448,17 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
                 mode="single"
                 selected={new Date(field.state.value?? format(Date.now(), "yyyy-MM-dd"))}
                 onSelect={(e) => {
-                  console.log("date", e)
                   if(e) {
-                  const dateString = format(e, "yyyy-MM-dd")
-                  console.log("dateString", dateString)
-                  field.handleChange(dateString)
+                    const dateString = format(e, "yyyy-MM-dd")
+                    field.handleChange(dateString)
                   }
                 }}
                 onDayBlur={field.handleBlur}
                 captionLayout="dropdown"
+                defaultMonth={defaultMonth}
+                startMonth={startMonth}
+                endMonth={endMonth}
+                {...props}
               />
             </PopoverContent>
           </Popover>
@@ -441,7 +468,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
   )
 }
 
-function FormComboboxField({ classesName, label, showLabel=true, orientation, showError=true, comboboxItems, selectPlaceholder, searchPlaceholder, emptyDataContent, } : FormFieldProps & ComboboxProps) {
+function FormComboboxField({ classesName, label, showLabel=true, orientation, showError=true, dropdownOptions, selectPlaceholder, searchPlaceholder, emptyDataContent, className, ...props } : FormFieldProps & ComboboxProps) {
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -456,11 +483,128 @@ function FormComboboxField({ classesName, label, showLabel=true, orientation, sh
             name={field.name}
             value={field.state.value}
             onSelect={(e) => field.handleChange(e)}
-            onBlur={field.handleBlur}
-            comboboxItems={comboboxItems}
+            dropdownOptions={dropdownOptions}
             searchPlaceholder={searchPlaceholder}
             selectPlaceholder={selectPlaceholder}
             emptyDataContent={emptyDataContent}
+            className={className}
+            {...props}
+          />
+        </>
+      )}
+    />
+  )
+}
+
+function FormSelectField({ classesName, label, showLabel=true, orientation, showError=true, dropdownOptions, placeholder, } : FormFieldProps & {dropdownOptions?: DropdownOption[]}) {
+  return (
+    <FormField<string> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <>
+          <Select
+            name={field.name}
+            value={field.state.value}
+            onValueChange={(e) => field.handleChange(e)}
+          >
+            <SelectTrigger className={cn("grow w-auto", classesName?.content)}>
+              <SelectValue placeholder={placeholder}/>
+            </SelectTrigger>
+            <SelectGroup>
+              <SelectContent>
+                {dropdownOptions?.map(item => (
+                  <SelectItem key={item.value} value={item.value} disabled={item.disabled}>{item.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </SelectGroup>
+          </Select>
+        </>
+      )}
+    />
+  )
+}
+
+const radioGroupVariants = cva(
+  "flex gap-3",
+  {
+    variants: {
+      groupOrientation: {
+        horizontal:
+          "flex-row flex-wrap items-center",
+        vertical:
+          "flex-col",
+      },
+    },
+    defaultVariants: {
+      groupOrientation: "horizontal",
+    },
+  }
+)
+function FormRadioGroupField({ className, classesName, label, showLabel=true, orientation, showError=true, dropdownOptions,  groupOrientation, } : FormFieldProps & VariantProps<typeof radioGroupVariants> & { className?: string, dropdownOptions?: DropdownOption[] }) {
+  return (
+    <FormField<string> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <>
+          <RadioGroup
+            id={field.name}
+            name={field.name}
+            defaultValue={field.state.value}
+            onValueChange={(e) => field.handleChange(e)}
+            onBlur={field.handleBlur}
+          >
+            <div className={cn(radioGroupVariants({groupOrientation, className}))}>
+              {dropdownOptions?.map(item => (
+                <div key={item.value} className="flex gap-1.5">
+                  <RadioGroupItem value={item.value} disabled={item.disabled}/>
+                  <Label>{item.label}</Label>
+                </div>
+              ))}
+            </div>
+          </RadioGroup>  
+        </>
+      )}
+    />
+  )
+}
+
+function FormCaptchaField({ classesName, label, showLabel=true, orientation, showError=true, ...props } : FormFieldProps) {
+  const { captchaData, isLoading, errorMessage, fetchCaptcha } = useCaptcha();
+  return (
+    <FormField<CaptchaValue> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <>
+          <Captcha
+            isLoading={isLoading}
+            errorMessage={errorMessage} 
+            captchaData={captchaData} 
+            fetchCaptcha={fetchCaptcha}
+            id={field.name}
+            name={"captcha_value"}
+            value={field.state.value.captcha_value}
+            // onChange={(e) => field.handleChange(e.target.value)}
+            onChange={(e) => {
+              const captchaValue = {
+                captcha_id: captchaData.captcha_id,
+                captcha_value: e.target.value,
+              } as CaptchaValue
+              field.handleChange(captchaValue)
+            }}
+            onBlur={field.handleBlur}
+            {...props}
           />
         </>
       )}
@@ -476,11 +620,15 @@ export {
   FormContent,
   FormSubscribeButton,
   FormFooter,
+  FormField,
   FormTextField,
+  FormTextareaField,
   FormNumberField,
   FormCheckboxField,
   FormSwitchField,
   FormDatePickerField,
   FormComboboxField,
-  FormField,
+  FormSelectField,
+  FormRadioGroupField,
+  FormCaptchaField,
 }

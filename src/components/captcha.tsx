@@ -6,25 +6,36 @@ import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import { CaptchaData } from "@/features/accounts/api/account";
+import { CaptchaData } from "@/types/ui-componet-types";
 
 const imageSizes = {
   sm: { width: 80, height: 24 },
-  md: { width: 120, height: 36 },
-  lg: { width: 160, height: 48 },
-  xl: { width: 200, height: 60 },
-  "2xl": { width: 240, height: 72 },
+  md: { width: 96, height: 32 },
+  lg: { width: 120, height: 40 },
+  xl: { width: 144, height: 48 },
+  "2xl": { width: 168, height: 56 },
 } as const;
 
-const captchaVariants = cva("", {
+const captchaVariants = cva("flex gap-2", {
   variants: {
     orientation: {  
-      horizontal: "flex-row",
+      horizontal: "flex-row items-center justify-center",
       vertical: "flex-col",
     },
     imageSize: imageSizes,
   },
+  defaultVariants: {
+    orientation: "horizontal",
+    imageSize: "md",
+  }
 });
+
+export type CaptchaProps = { 
+  isLoading: boolean, 
+  errorMessage: string, 
+  captchaData: CaptchaData, 
+  fetchCaptcha: () => void,
+} & React.ComponentProps<"input"> & VariantProps<typeof captchaVariants>
 
 function Captcha ({ 
   isLoading, 
@@ -32,20 +43,16 @@ function Captcha ({
   captchaData, 
   fetchCaptcha,
   className,
-  orientation = "horizontal",
-  imageSize = "md",
+  orientation,
+  imageSize="md",
+  placeholder = "Verify code",
   ...props
-}: { 
-  isLoading: boolean, 
-  errorMessage: string, 
-  captchaData: CaptchaData, 
-  fetchCaptcha: () => void,
-} & React.ComponentProps<"input"> & VariantProps<typeof captchaVariants>) {
+}: CaptchaProps) {
   return (
     <div>
       {isLoading && <Spinner size="sm" />}
       {!isLoading && !errorMessage && (
-        <div className={cn(captchaVariants({ orientation }), "flex mx-1 items-center justify-center gap-2")}>
+        <div className={cn(captchaVariants({ orientation }))}>
           <Image 
             alt="captcha" 
             src={captchaData.pic_path} 
@@ -56,7 +63,7 @@ function Captcha ({
           />
           <Input 
             id={captchaData.captcha_id} 
-            placeholder='verify code'
+            placeholder={placeholder}
             className={cn(className)}
             maxLength={captchaData.captcha_length}
             {...props}

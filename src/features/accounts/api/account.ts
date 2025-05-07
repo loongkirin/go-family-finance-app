@@ -1,6 +1,8 @@
 import axios from "@/lib/axios";
 import { z } from "zod";
 import { signIn, useSession } from "next-auth/react";
+import { Captcha, CaptchaData } from "@/types/ui-componet-types";
+
 export const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
@@ -72,17 +74,6 @@ export interface User {
   tenant: Tenant;
   oauth: OAuth;
   captcha: Captcha;
-}
-
-export interface Captcha {
-  captcha_id: string;
-  captcha_value: string;
-}
-
-export interface CaptchaData{
-  captcha_id: string;
-  pic_path: string;
-  captcha_length: number;
 }
 
 export const accountApi = {

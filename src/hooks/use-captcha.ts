@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react';
-import { CaptchaData, accountApi } from '@/features/accounts/api/account';
+import { accountApi } from '@/features/accounts/api/account';
+import { CaptchaData } from '@/types/ui-componet-types';
 
 const useCaptcha = () => {
     const [isLoading, setIsLoading] = useState(true);

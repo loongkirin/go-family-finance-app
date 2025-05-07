@@ -13,22 +13,37 @@ const frameworks = [
   {
     value: "next.js",
     label: "Next.js",
+    disabled: false,
   },
   {
     value: "sveltekit",
     label: "SvelteKit",
+    disabled: false,
   },
   {
     value: "nuxt.js",
     label: "Nuxt.js",
+    disabled: false,
   },
   {
     value: "remix",
     label: "Remix",
+    disabled: false,
   },
   {
     value: "astro",
     label: "Astro",
+    disabled: true,
+  },
+  {
+    value: "javascript",
+    label: "Javascript",
+    disabled: false,
+  },
+  {
+    value: "typescript",
+    label: "Typescript",
+    disabled: false,
   },
 ]
 
@@ -39,6 +54,7 @@ export const FormDist = () => {
       onChange: PeopleSchema,
     },
     onSubmit: ({ value }) => {
+      console.log("login form value:", value)
       alert(JSON.stringify(value, null, 2))
     },
   })
@@ -117,15 +133,24 @@ export const FormDist = () => {
           <h2>Emergency Contact</h2>
           <form.AppField
             name="emergencyContact.fullName"
-            children={(field) => <field.FormTextField label="Full Name" />}
+            children={(field) => <field.FormTextareaField label="Full Name" orientation={"horizontal"} />}
           />
           <form.AppField
             name="emergencyContact.phone"
-            children={(field) => <field.FormTextField label="Phone" />}
+            children={(field) => <field.FormTextField label="Phone" orientation={"horizontal"}/>}
           />
           <form.AppField
             name="emergencyContact.framework"
-            children={(field) => <field.FormComboboxField label="Framework" comboboxItems={frameworks} selectPlaceholder="Select a framework" searchPlaceholder="Search a framwork" emptyDataContent="No framework yet"/>}
+            children={(field) => <field.FormComboboxField label="Framework" dropdownOptions={frameworks} selectPlaceholder="Select a framework" searchPlaceholder="Search a framwork" 
+              emptyDataContent="No framework yet" orientation={"horizontal"}/>}
+          />
+          <form.AppField
+            name="emergencyContact.tech"
+            children={(field) => <field.FormSelectField label="Tech" dropdownOptions={frameworks} placeholder="Select a tech" orientation="horizontal"/>}
+          />
+          <form.AppField
+            name="emergencyContact.tech2"
+            children={(field) => <field.FormRadioGroupField label="Tech2" dropdownOptions={frameworks} placeholder="Select a tech2" orientation="horizontal" groupOrientation={"horizontal"}/>}
           />
           <form.AppField
             name="allow"
@@ -133,12 +158,16 @@ export const FormDist = () => {
           />
           <form.AppField
             name="agree"
-            children={(field) => <field.FormSwitchField label="Agree" orientation="horizontal"/>}
+            children={(field) => <field.FormSwitchField label="Agree" orientation={"vertical"}/>}
           />
           <form.AppField 
             name="birthday"
-            children={(field) => <field.FormDatePickerField label="Birthday" orientation={"horizontal"} />}
-            />
+            children={(field) => <field.FormDatePickerField label="Birthday" orientation={"horizontal"} startMonth={new Date(1925, 1)}  endMonth={new Date(2099,12)} classesName={{content:"h-4 py-0"}}/>}
+          />
+          <form.AppField
+            name="captcha"
+            children={(field) => <field.FormCaptchaField label="Captcha" orientation={"horizontal"}/>}
+          />
           <form.AppForm>
             <form.FormSubscribeButton>Submit</form.FormSubscribeButton>
           </form.AppForm>

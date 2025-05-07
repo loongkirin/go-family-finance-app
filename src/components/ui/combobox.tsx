@@ -5,32 +5,24 @@ import { Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { ComboboxItem } from "@/types/ui-componet-types"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandFilter } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { DropdownOption } from "@/types/ui-componet-types"
 
 export type ComboboxProps = {
+  className?: string,
+  id?: string,
   name?: string,
-  comboboxItems: ComboboxItem[],
+  dropdownOptions?: DropdownOption[],
   selectPlaceholder?: string,
   searchPlaceholder?: string,
   emptyDataContent?: string,
   value?: string,
-  onSelect?: (value: string | undefined) => void;
-} & React.ComponentProps<typeof PopoverContent>
+  onSelect?: (value: string | undefined) => void,
+  commandFilter?: typeof CommandFilter,
+}
 
-function Combobox({ name, comboboxItems, selectPlaceholder, searchPlaceholder, emptyDataContent, value, onSelect, className, ...props } : ComboboxProps) {
+function Combobox({id, name, dropdownOptions, selectPlaceholder, searchPlaceholder, emptyDataContent, value, onSelect, className, commandFilter } : ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [selectedValue, setSelectedValue] = React.useState(value)
 
@@ -41,30 +33,33 @@ function Combobox({ name, comboboxItems, selectPlaceholder, searchPlaceholder, e
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between")}
+          className={cn("justify-between grow", className)}
+          id={id}
+          name={name}
         >
           {value
-            ? comboboxItems.find((item) => item.value === value)?.label
-            : <div>{selectPlaceholder}</div>}
+            ? dropdownOptions?.find((item) => item.value === value)?.label
+            : <div className="opacity-50">{selectPlaceholder}</div>}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-auto p-0", className)} {...props}>
-        <Command>
+      <PopoverContent className="w-auto p-0">
+        <Command filter={commandFilter}>
           <CommandInput placeholder={searchPlaceholder}/>
           <CommandList>
             <CommandEmpty>{emptyDataContent}</CommandEmpty>
             <CommandGroup>
-              {comboboxItems.map((item) => (
+              {dropdownOptions?.map((item) => (
                 <CommandItem
                   key={item.value}
                   value={item.value}
                   onSelect={(currentValue) => {
-                    const finalVlaue = currentValue === selectedValue ? "" : currentValue
-                    setSelectedValue(finalVlaue)
-                    onSelect && onSelect(finalVlaue)
+                    const finalvalue = currentValue === selectedValue ? "" : currentValue
+                    setSelectedValue(finalvalue)
+                    onSelect && onSelect(finalvalue)
                     setOpen(false)
                   }}
+                  disabled={item.disabled}
                 >
                   {item.label}
                   <Check

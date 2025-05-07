@@ -2,10 +2,13 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, DropdownProps } from "react-day-picker"
+import { buttonVariants } from "@/components/ui/button"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Combobox } from "@/components/ui/combobox"
+import { DropdownOption } from "@/types/ui-componet-types"
 
 import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
 
 function Calendar({
   className,
@@ -18,10 +21,11 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
-        root:"p-8",
+        root:"px-8 py-3",
         months: "flex flex-col sm:flex-row gap-2 justify-between",
         month: "flex flex-col gap-4",
         dropdowns: "w-full flex items-center justify-center gap-4",
+        dropdown: "bg-popover text-popover-foreground", 
         months_dropdown: "w-max",
         years_dropdown: "w-max",
         month_caption: "flex pt-1 relative w-full items-center justify-center",
@@ -70,6 +74,62 @@ function Calendar({
           }
           return <ChevronRight className={cn("size-6", className)} {...props} />;
         },
+        Dropdown:(props: DropdownProps) => {
+          const { options, value, onChange, "aria-label": ariaLabel } = props;
+          const handleValueChange = (newValue: string | undefined) => {
+            if (onChange) {
+              const syntheticEvent = {
+                target: {
+                  value: newValue
+                }
+              } as React.ChangeEvent<HTMLSelectElement>;
+        
+              onChange(syntheticEvent);
+            }
+          };
+          const dropdownOptions = options?.map(option => ({
+              label: option.label, value: option.value.toString(), disabled: option.disabled 
+            } as DropdownOption)
+          );
+          return (
+            // <Select value={value?.toString()} onValueChange={handleValueChange}>
+            //   <SelectTrigger aria-label={ariaLabel} size="sm" className="w-auto py-0">
+            //     <SelectValue />
+            //   </SelectTrigger>
+            //   <SelectContent>
+            //     <SelectGroup>
+            //       {options?.map((option) => (
+            //         <SelectItem
+            //           key={option.value}
+            //           value={option.value.toString()}
+            //           disabled={option.disabled}
+            //         >
+            //           {option.label}
+            //         </SelectItem>
+            //       ))}
+            //     </SelectGroup>
+            //   </SelectContent>
+            // </Select>
+            <Combobox
+              className="h-8 py-1" 
+              value={value?.toString()} 
+              onSelect={(e) => {
+                handleValueChange(e)
+              }} 
+              dropdownOptions={dropdownOptions}
+              commandFilter={(value, search) => {
+                // Custom scoring algorithm
+                const item = dropdownOptions?.find(i => i.value.toLocaleLowerCase() === value.toLocaleLowerCase());
+                if (!item) {
+                  return 0;
+                }
+                
+                const labelScore = item.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                return labelScore;
+              }}
+            />
+          )
+        }
       }}
       {...props}
     />
