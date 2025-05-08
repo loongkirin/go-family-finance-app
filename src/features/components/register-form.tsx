@@ -1,15 +1,8 @@
 "use client"
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Captcha } from "@/components/captcha"
-import useCaptcha from "@/hooks/use-captcha"
-import { useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { accountApi, createRequest, RegisterRequest, RegisterSchema, Request } from "@/features/accounts/api/account";
 import { toast } from "sonner";
@@ -18,8 +11,6 @@ import { Form, FormContent, FormFooter, FormHeader, FormTitle } from "@/componen
 
 export function RegisterForm() {
   const router = useRouter();
-  const { captchaData, isLoading, errorMessage, fetchCaptcha } = useCaptcha();
-  const ref = useRef<HTMLInputElement>(null);
 
   const form = useAppForm({
     defaultValues:{
@@ -54,13 +45,11 @@ export function RegisterForm() {
         toast.success("Register success, please login")
         router.push("/account/login")
       } else {
-        fetchCaptcha();
         toast.error(data.message || "Error occured while registering, please try again later")
       }
     },
     onError: (error) => {
       console.log("register error", error);
-      fetchCaptcha();
       toast.error("Error occured while registering, please try again later")
     }
   })
