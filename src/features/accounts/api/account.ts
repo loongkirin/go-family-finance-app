@@ -78,8 +78,8 @@ export const accountApi = {
     signIn: async (data: LoginRequest): Promise<Response<User>> => {
       try {
         const response = await signIn("credentials", { ...data, ...data.captcha, redirect: false });
-        console.log("signIn response", response);
-        if(response === null || response.error) {
+        // console.log("signIn response", response);
+        if(response == null || response.error) {
           return createResponse(400, response.error || "Login failed", {} as User);
         }
         return createResponse(response.status, "Login successful", {} as User);
@@ -95,9 +95,9 @@ export const accountApi = {
         return response.data;
     },
     register: async (data: Request<RegisterRequest>): Promise<Response<User>> => {
-        console.log("register data", data);
+        // console.log("register data", data);
         const response = await axios.post("/auth/register", data);
-        console.log("register response", response);
+        // console.log("register response", response);
         // return response.data;
         return createResponse(response.data.code, response.data.message, { ...response.data.result?.data } as User);
     },
