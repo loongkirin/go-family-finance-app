@@ -1,32 +1,30 @@
 import axios from "@/lib/axios";
 import { z } from "zod";
 import { signIn, useSession } from "next-auth/react";
-import { Captcha, CaptchaData } from "@/types/ui-componet-types";
+import { Captcha, CaptchaData, CaptchaSchema } from "@/types/ui-componet-types";
 
-export const loginSchema = z.object({
+export const LoginSchema = z.object({
     email: z.string().email("Invalid email address"),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    captcha_value: z.string().min(4, "Captcha must be at least 4 characters"),
-    captcha_id: z.string(),
+    password: z.string().min(1, "Password is required"),
+    captcha: CaptchaSchema,
   });
 
-export const registerSchema = z.object({
+export const RegisterSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirm_password: z.string(),
   user_name: z.string().min(1, "User name is required"),
   tenant_name: z.string().min(1, "Tenant name is required"),
-  captcha_value: z.string().min(4, "Captcha must be at least 4 characters"),
-  captcha_id: z.string(),
+  captcha: CaptchaSchema,
 }).refine((data) => data.password === data.confirm_password, {
   message: "Passwords don't match",
   path: ["confirm_password"],
 });
 
-export type LoginRequest = z.infer<typeof loginSchema>;
-export type RegisterRequest = z.infer<typeof registerSchema>;
+export type LoginRequest = z.infer<typeof LoginSchema>;
+export type RegisterRequest = z.infer<typeof RegisterSchema>;
 
 export interface Request<T> {
   data: T;
@@ -78,13 +76,17 @@ export interface User {
 
 export const accountApi = {
     signIn: async (data: LoginRequest): Promise<Response<User>> => {
-      console.log("signIn data", data);
-      const response = await signIn("credentials", { ...data, redirect: false });
-      console.log("signIn response", response);
-      if(response == null || response.error) {
-        return createResponse(400, "Login failed", {} as User);
+      try {
+        const response = await signIn("credentials", { ...data, ...data.captcha, redirect: false });
+        console.log("signIn response", response);
+        if(response === null || response.error) {
+          return createResponse(400, response.error || "Login failed", {} as User);
+        }
+        return createResponse(response.status, "Login successful", {} as User);
+      }catch(error) {
+        console.log("signIn error", error)
       }
-      return createResponse(response.status, "Login successful", {} as User);
+      return createResponse(400, "Login failed", {} as User);   
     },
     login: async (data: LoginRequest): Promise<Response<User>> => {
         console.log("login data", data);

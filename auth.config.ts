@@ -14,17 +14,20 @@ export default {
             email: credentials.email as string,
             phone: credentials.phone as string,
             password: credentials.password as string,
-            captcha_value: credentials.captcha_value as string,
-            captcha_id: credentials.captcha_id as string
+            captcha: {
+              captcha_id: credentials.captcha_id as string,
+              captcha_value: credentials.captcha_value as string,
+            }
           }
         }
+        // console.log("loginRequest:", loginRequest);
         const response = await axios.post("http://localhost:3000/api/v1/auth/login", loginRequest);
-        console.log("login response", response);
+        // console.log("login response", response);
         const result = response.data;
-        console.log("login result", result);
+        // console.log("login result", result);
         if(result.code !== 200) {
           console.log("login error", result.message);
-          return Promise.reject(new Error(result.message || "Login failed"));
+          return null;
         }
         console.log("login result.data", result.result.data)
         return result.result.data;

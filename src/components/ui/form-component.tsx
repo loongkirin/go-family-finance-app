@@ -136,6 +136,7 @@ type FormFieldProps = {
   label?: string | undefined,
   placeholder?: string | undefined,
   showError?: boolean,
+  className?: string,
 } & VariantProps<typeof fieldContentVariants>
 
 type FormFieldRenderProps = {
@@ -160,7 +161,6 @@ function FormFieldRoot({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="form-field-root"
       className={cn(
-        "grid",
         className
       )}
       {...props}
@@ -222,7 +222,7 @@ function FormField<TData>({ classesName, render, showLabel = true, label, orient
 //   )
 // }
 
-function FormTextField({ classesName, label, showLabel=true, orientation, showError=true, placeholder } : FormFieldProps) {
+function FormTextField({ classesName, label, showLabel=true, orientation, showError=true, placeholder, className, ...props } : FormFieldProps & React.ComponentProps<"input">) {
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -235,10 +235,12 @@ function FormTextField({ classesName, label, showLabel=true, orientation, showEr
           <Input
             id={field.name}
             name={field.name}
+            className={className}
             value={field.state.value}
             onChange={(e) => field.handleChange(e.target.value)}
             onBlur={field.handleBlur}
             placeholder={placeholder}
+            {...props}
           />
         </>
       )}
@@ -246,7 +248,7 @@ function FormTextField({ classesName, label, showLabel=true, orientation, showEr
   )
 }
 
-function FormTextareaField({ classesName, label, showLabel=true, orientation, showError=true, placeholder } : FormFieldProps) {
+function FormTextareaField({ classesName, label, showLabel=true, orientation, showError=true, placeholder, className } : FormFieldProps) {
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -263,7 +265,7 @@ function FormTextareaField({ classesName, label, showLabel=true, orientation, sh
             onChange={(e) => field.handleChange(e.target.value)}
             onBlur={field.handleBlur}
             placeholder={placeholder}
-            className={classesName?.content}
+            className={className}
           />
         </>
       )}
@@ -271,7 +273,7 @@ function FormTextareaField({ classesName, label, showLabel=true, orientation, sh
   )
 }
 
-function FormNumberField({ classesName, label, showLabel=true, orientation, showError=true, placeholder } : FormFieldProps) {
+function FormNumberField({ classesName, label, showLabel=true, orientation, showError=true, placeholder, className } : FormFieldProps) {
   return (
     <FormField<number | undefined> 
       classesName={classesName} 
@@ -289,6 +291,7 @@ function FormNumberField({ classesName, label, showLabel=true, orientation, show
             onChange={(e) => field.handleChange(Number(e.target.value))}
             onBlur={field.handleBlur}
             placeholder={placeholder}
+            className={className}
           />
         </>
       )}
@@ -325,7 +328,7 @@ function FormNumberField({ classesName, label, showLabel=true, orientation, show
 //   )
 // }
 
-function FormCheckboxField({ classesName, label, showLabel=true, orientation, showError=true } : FormFieldProps) {
+function FormCheckboxField({ classesName, label, showLabel=true, orientation, showError=true, className } : FormFieldProps) {
   return (
     <FormField<boolean> 
       classesName={classesName} 
@@ -341,6 +344,7 @@ function FormCheckboxField({ classesName, label, showLabel=true, orientation, sh
             checked={field.state.value}
             onCheckedChange={(e) => field.handleChange(e === true)}
             onBlur={field.handleBlur}
+            className={className}
           />
         </>
       )}
@@ -348,7 +352,7 @@ function FormCheckboxField({ classesName, label, showLabel=true, orientation, sh
   )
 }
 
-function FormSwitchField({ classesName, label, showLabel=true, orientation, showError=true } : FormFieldProps) {
+function FormSwitchField({ classesName, label, showLabel=true, orientation, showError=true, className } : FormFieldProps) {
   return (
     <FormField<boolean> 
       classesName={classesName} 
@@ -364,6 +368,7 @@ function FormSwitchField({ classesName, label, showLabel=true, orientation, show
             checked={field.state.value}
             onCheckedChange={(e) => field.handleChange(e===true)}
             onBlur={field.handleBlur}
+            className={className}
           />
         </>
       )}
@@ -418,7 +423,7 @@ function FormSwitchField({ classesName, label, showLabel=true, orientation, show
 //   )
 // }
 
-function FormDatePickerField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & {
+function FormDatePickerField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", className, defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & {
   defaultMonth?: Date, startMonth?: Date, endMonth?: Date
 }) {
   return (
@@ -437,6 +442,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
                 className={cn(
                   "justify-start text-left font-normal item grow",
                   !field.state.value && "text-muted-foreground",
+                  className
                 )}
               >
                 <CalendarIcon />
@@ -496,7 +502,7 @@ function FormComboboxField({ classesName, label, showLabel=true, orientation, sh
   )
 }
 
-function FormSelectField({ classesName, label, showLabel=true, orientation, showError=true, dropdownOptions, placeholder, } : FormFieldProps & {dropdownOptions?: DropdownOption[]}) {
+function FormSelectField({ classesName, label, showLabel=true, orientation, showError=true, dropdownOptions, placeholder, className } : FormFieldProps & {dropdownOptions?: DropdownOption[]}) {
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -511,7 +517,7 @@ function FormSelectField({ classesName, label, showLabel=true, orientation, show
             value={field.state.value}
             onValueChange={(e) => field.handleChange(e)}
           >
-            <SelectTrigger className={cn("grow w-auto", classesName?.content)}>
+            <SelectTrigger className={cn("grow w-auto", className)}>
               <SelectValue placeholder={placeholder}/>
             </SelectTrigger>
             <SelectGroup>
@@ -544,7 +550,7 @@ const radioGroupVariants = cva(
     },
   }
 )
-function FormRadioGroupField({ className, classesName, label, showLabel=true, orientation, showError=true, dropdownOptions,  groupOrientation, } : FormFieldProps & VariantProps<typeof radioGroupVariants> & { className?: string, dropdownOptions?: DropdownOption[] }) {
+function FormRadioGroupField({ className, classesName, label, showLabel=true, orientation, showError=true, dropdownOptions,  groupOrientation, } : FormFieldProps & VariantProps<typeof radioGroupVariants> & { dropdownOptions?: DropdownOption[] }) {
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -576,7 +582,7 @@ function FormRadioGroupField({ className, classesName, label, showLabel=true, or
   )
 }
 
-function FormCaptchaField({ classesName, label, showLabel=true, orientation, showError=true, ...props } : FormFieldProps) {
+function FormCaptchaField({ classesName, label, showLabel=true, orientation, showError=true, className, ...props } : FormFieldProps) {
   const { captchaData, isLoading, errorMessage, fetchCaptcha } = useCaptcha();
   return (
     <FormField<CaptchaValue> 
@@ -604,6 +610,7 @@ function FormCaptchaField({ classesName, label, showLabel=true, orientation, sho
               field.handleChange(captchaValue)
             }}
             onBlur={field.handleBlur}
+            className={className}
             {...props}
           />
         </>
