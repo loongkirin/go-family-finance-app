@@ -16,7 +16,7 @@ export const PeopleSchema = z.object({
   phone: z.string().min(3, '[Zod] You must have a length of at least 3'),
   allow: z.boolean(),
   agree: z.boolean(),
-  birthday:z.string().date(),
+  birthday:z.date(),
   address: z.object({
     line1: z.string(),
     line2: z.string().optional(),
@@ -45,7 +45,7 @@ export const peopleFormOpts = formOptions({
     allow: false,
     agree: true,
     age: 20,
-    birthday: "",
+    birthday: new Date(),
     address: {
       line1: '',
       line2: undefined,

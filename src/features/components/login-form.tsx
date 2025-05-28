@@ -130,7 +130,7 @@ export function LoginForm() {
                   Or
                 </span>
               </div>
-              <div className="text-center text-sm">
+              <div className="text-center text-sm mt-2">
                 Don&apos;t have an account?{" "}
                 <Link href="/account/register" className="underline underline-offset-4">
                   Sign up

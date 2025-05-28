@@ -23,6 +23,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { DropdownOption, Captcha as CaptchaValue } from "@/types/ui-componet-types"
 import useCaptcha from "@/hooks/use-captcha"
+import { DatePicker, DatePickerProps } from "./date-picker"
 
 
 function Form({ className, ...props }: React.ComponentProps<"div">) {
@@ -190,7 +191,7 @@ function FormField<TData>({ classesName, render, showLabel = true, label, orient
       </FormFieldContent>
       
       {showError && errors.map((error:any, index:number) => (
-        <FormFieldError key={index} className={classesName?.error}>
+        <FormFieldError key={index} className={cn("mt-1.5", classesName?.error)}>
           {error.message}
         </FormFieldError>
       ))}
@@ -427,7 +428,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
   defaultMonth?: Date, startMonth?: Date, endMonth?: Date
 }) {
   return (
-    <FormField<boolean> 
+    <FormField<string> 
       classesName={classesName} 
       showLabel={showLabel}
       label={label}
@@ -440,7 +441,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
               <Button
                 variant={"outline"}
                 className={cn(
-                  "justify-start text-left font-normal item grow",
+                  "justify-start text-left font-normal item grow ",
                   !field.state.value && "text-muted-foreground",
                   className
                 )}
@@ -619,6 +620,40 @@ function FormCaptchaField({ classesName, label, showLabel=true, orientation, sho
   )
 }
 
+function FormDatePickerTestField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", className, defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & DatePickerProps) {
+  return (
+    <FormField<Date|undefined> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <DatePicker  
+
+        // value={new Date(field.state.value?? format(Date.now(), "PPP"))}
+        value={field.state.value?? Date.now()}
+        onChange={(e) => {
+          if(e) {
+            console.log("e:", e)
+            const dateString = format(e, "PPP")
+            console.log("dateString:", dateString)
+            field.handleChange(e)
+          }
+        }}
+        onDayBlur={field.handleBlur}
+        captionLayout="dropdown"
+        defaultMonth={defaultMonth}
+        startMonth={startMonth}
+        endMonth={endMonth}
+        {...props}
+        />
+       
+      )}
+    />
+  )
+}
+
 export {
   Form,
   FormHeader,
@@ -638,4 +673,5 @@ export {
   FormSelectField,
   FormRadioGroupField,
   FormCaptchaField,
+  FormDatePickerTestField,
 }

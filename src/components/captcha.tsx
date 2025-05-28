@@ -59,7 +59,7 @@ function Captcha ({
             width={imageSizes[imageSize || 'sm'].width} 
             height={imageSizes[imageSize || 'sm'].height} 
             onClick={() => fetchCaptcha()} 
-            className="cursor-pointer bg-gray-200 rounded-sm"
+            className="cursor-pointer bg-gray-200 rounded-sm"            
           />
           <Input 
             id={captchaData.captcha_id} 
@@ -70,7 +70,7 @@ function Captcha ({
           />
         </div>
       )}
-      {errorMessage && <div className='cursor-pointer' onClick={() => fetchCaptcha()}>{errorMessage}, Click to Refresh</div>}
+      {errorMessage && <div className='cursor-pointer' onClick={() => fetchCaptcha()}>{errorMessage}</div>}
     </div>
   )
 }

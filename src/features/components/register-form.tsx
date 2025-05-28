@@ -113,7 +113,7 @@ export function RegisterForm() {
                   Or
                 </span>
               </div>
-              <div className="text-center text-sm">
+              <div className="text-center text-sm mt-2">
                 Already have an account?{" "}
                 <Link href="/account/login" className="underline underline-offset-4">
                   Login

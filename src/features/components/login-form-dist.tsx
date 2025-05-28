@@ -8,6 +8,7 @@ import { peopleFormOpts, PeopleSchema } from "../accounts/shared-form"
 import { AddressFields } from "./address_fields"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { es, zhCN } from "date-fns/locale";
 
 const frameworks = [
   {
@@ -162,7 +163,7 @@ export const FormDist = () => {
           />
           <form.AppField 
             name="birthday"
-            children={(field) => <field.FormDatePickerField label="Birthday" orientation={"horizontal"} startMonth={new Date(1925, 1)}  endMonth={new Date(2099,12)} classesName={{content:"h-4 py-0"}}/>}
+            children={(field) => <field.FormDatePickerTestField label="Birthday" orientation={"horizontal"} startMonth={new Date(1925, 1)}  endMonth={new Date(2099,12)} locale={zhCN}  classesName={{content:"h-4 py-0"}}/>}
           />
           <form.AppField
             name="captcha"

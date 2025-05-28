@@ -43,7 +43,7 @@ function Combobox({id, name, dropdownOptions, selectPlaceholder, searchPlacehold
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent className="w-auto p-0" align={"start"}>
         <Command filter={commandFilter}>
           <CommandInput placeholder={searchPlaceholder}/>
           <CommandList>

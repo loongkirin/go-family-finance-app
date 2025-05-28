@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import React from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { DatePicker } from '@/components/ui/date-picker'
 
 const page = () => {
   const user = useAuth()
@@ -20,6 +21,7 @@ const page = () => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+      <DatePicker captionLayout={"dropdown"}/>
     </div>
   )
 }

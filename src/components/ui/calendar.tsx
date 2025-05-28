@@ -22,14 +22,14 @@ function Calendar({
       className={cn("p-3", className)}
       classNames={{
         root:"px-8 py-3",
-        months: "flex flex-col sm:flex-row gap-2 justify-between",
+        months: "flex flex-col sm:flex-row gap-2 justify-center",
         month: "flex flex-col gap-4",
         dropdowns: "w-full flex items-center justify-center gap-4",
         dropdown: "bg-popover text-popover-foreground", 
         months_dropdown: "w-max",
         years_dropdown: "w-max",
         month_caption: "flex pt-1 relative w-full items-center justify-center",
-        caption_label: "text-sm font-medium hidden",
+        caption_label: cn("text-sm font-medium", props.captionLayout === "label" ? "": "hidden"),
         nav: "flex items-center gap-1 justify-center",
         button_previous: cn(
           buttonVariants({ variant: "ghost" }),
@@ -39,7 +39,7 @@ function Calendar({
           buttonVariants({ variant: "ghost" }),
           "size-8 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1"
         ),
-        month_grid: "w-full border-collapse space-x-1",
+        month_grid: "w-full border-collapse space-x-1 mr-2",
         weekdays: "flex",
         weekday:
           "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",

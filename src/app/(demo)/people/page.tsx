@@ -1,9 +1,13 @@
 import { FormDist } from '@/features/components/login-form-dist'
+import { PersonTableForm } from '@/features/components/person-table-form'
 import React from 'react'
 
 const page = () => {
   return (
-    <FormDist/>
+    <div>
+      <FormDist/>
+      <PersonTableForm/>
+    </div>
   )
 }
 
