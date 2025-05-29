@@ -1,53 +1,170 @@
 "use client"
 
-import * as React from "react"
-import { ArrowUpDown, ArrowUpAZ, ArrowDownAZ, Funnel, GripVertical } from "lucide-react";
+import React, { CSSProperties, useState } from "react"
+import { ArrowUpDown, ArrowUpAZ, ArrowDownAZ, GripVertical, GripHorizontal, ListFilter, Pin } from "lucide-react";
 import {
+  Cell,
+  Row,
   ColumnDef,
-  ColumnFiltersState,
-  Column,
-  RowData,
-  SortingState,
+  Header,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
-  Header,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table'
 
+// needed for table body level scope DnD setup
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { InputDebounced } from "./input-debounced";
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  type DragEndEvent,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  horizontalListSortingStrategy,  //column horizontal dragg
+} from '@dnd-kit/sortable'
+
+// needed for row & cell level scope DnD setup
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import { Button } from "./button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import { Label } from "./label";
+import { cn } from "@/lib/utils";
 
-import {Tooltip,  TooltipTrigger, TooltipContent } from "./tooltip";
+function DraggableTableHeader({
+  header,
+}: {
+  header: Header<any, unknown>
+}) {
+  const { attributes, isDragging, listeners, setNodeRef, transform } =  useSortable({
+    id: header.column.id
+  })
 
-declare module '@tanstack/react-table' {
-  //allows us to define custom properties for our columns
-  export interface ColumnMeta<TData extends RowData, TValue> {
-    filterVariant?: 'text' | 'range' | 'select',
-    disableFilter?: boolean,
-    disableSort?: boolean,
-    disableGroup?: boolean,
-    disablePin?: boolean,
-    disableResize?: boolean,
-    disableReorder?: boolean,
+  const style: CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: 'relative',
+    transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
+    transition: 'width transform 0.5s ease-in-out',
+    whiteSpace: 'nowrap',
+    width: header.column.getSize(),
+    zIndex: isDragging ? 1 : 0,
   }
+
+  return (
+    <TableHead colSpan={header.colSpan} style={style} ref={setNodeRef}>
+      <div className="flex items-center justify-between">
+        { header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext()) }
+        <div className="flex gap-0.5 items-center">
+        <ToolTipButton content="Sort">
+          <ArrowUpDown/>
+        </ToolTipButton>  
+        <ToolTipButton content="Filter">
+          <ListFilter/>
+        </ToolTipButton>
+        <ToolTipButton content="Pin">
+          <Pin/>
+        </ToolTipButton>
+        <ToolTipButton content="ReOrder" {...attributes} {...listeners}>
+          <GripVertical/>
+        </ToolTipButton>
+        </div>
+      </div>
+      
+      {/* <button {...attributes} {...listeners} >
+        🟰
+      </button> */}
+    </TableHead>
+  )
 }
 
+function DraggableCell ({ cell }: { cell: Cell<any, unknown> }) {
+  const { isDragging, setNodeRef, transform } = useSortable({
+    id: cell.column.id,
+  })
+
+  const style: CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: 'relative',
+    transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
+    transition: 'width transform 0.5s ease-in-out',
+    width: cell.column.getSize(),
+    zIndex: isDragging ? 1 : 0,
+  }
+
+  return (
+    <TableCell style={style} ref={setNodeRef}>
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </TableCell>
+  )
+}
+
+function ToolTipButton({
+  children,
+  content,
+  ...props
+} : { content?: string } & React.ComponentProps<typeof Button>) {
+  return(
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant={'ghost'} className="size-4" {...props} >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <Label className="text-sm">{content}</Label>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+function RowDragHandleCell ({ rowId }: { rowId: string }) {
+  const { attributes, listeners } = useSortable({
+    id: rowId,
+  })
+  return (
+    // Alternatively, you could set these attributes on the rows themselves
+    <Button variant={"ghost"} className="size-4" {...attributes} {...listeners}>
+      <GripHorizontal/>
+    </Button>
+  )
+}
+
+function DraggableRow({ row }: { row: Row<any> }) {
+  const { transform, transition, setNodeRef, isDragging } = useSortable({
+    id: row.original.id,
+  })
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform), //let dnd-kit do its thing
+    transition: transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1 : 0,
+    position: 'relative',
+  }
+  return (
+    // connect row ref to dnd-kit, apply important styles
+    <TableRow ref={setNodeRef} style={style}>
+      {row.getVisibleCells().map(cell => (
+        <TableCell key={cell.id} style={{ width: cell.column.getSize() }}>
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
+    </TableRow>
+  )
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  disabled?: boolean;
+  disabled?: boolean
 }
 
 function DataTable<TData, TValue>({
@@ -55,153 +172,86 @@ function DataTable<TData, TValue>({
   data,
   disabled,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+  const [columnOrder, setColumnOrder] = React.useState<string[]>(() =>
+    columns.map(c => c.id!)
   )
-  const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
+    
     state: {
-      sorting,
-      columnFilters,
-      rowSelection,
+      columnOrder,
     },
-  });
+    onColumnOrderChange: setColumnOrder,
+    debugTable: true,
+    debugHeaders: true,
+    debugColumns: true,
+  })
+
+  // reorder columns after drag & drop
+  function handleColumnDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (active && over && active.id !== over.id) {
+      setColumnOrder(columnOrder => {
+        const oldIndex = columnOrder.indexOf(active.id as string)
+        const newIndex = columnOrder.indexOf(over.id as string)
+        return arrayMove(columnOrder, oldIndex, newIndex) //this is just a splice util
+      })
+    }
+  }
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {}),
+    useSensor(TouchSensor, {}),
+    useSensor(KeyboardSensor, {})
+  )
 
   return (
-    <div>
-      <div className="rounded-md border">
+    // NOTE: This provider creates div elements, so don't nest inside of <table> elements
+    <DndContext
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis]}
+      onDragEnd={handleColumnDragEnd}
+      sensors={sensors}
+    >
+      <div className="p-2">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    // <TableHead key={header.id}>
-                    //   {header.isPlaceholder
-                    //     ? null
-                    //     : flexRender(
-                    //         header.column.columnDef.header,
-                    //         header.getContext()
-                    //       )}
-                    // </TableHead>
-                    <TableHeadContent key={header.id} header={header} />
-                  )
-                })}
+                <SortableContext
+                  items={columnOrder}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {headerGroup.headers.map(header => (
+                    <DraggableTableHeader key={header.id} header={header} />
+                  ))}
+                </SortableContext>
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
+            {table.getRowModel().rows.map(row => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map(cell => (
+                  <SortableContext
+                    key={cell.id}
+                    items={columnOrder}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    <DraggableCell key={cell.id} cell={cell} />
+                  </SortableContext>
+                ))}
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
+        <pre>{JSON.stringify(data, null, 2)}</pre>
       </div>
-    </div>
+    </DndContext>
   )
 }
 
-function TableHeadContent({ header }: { header: Header<any, unknown> }) {
-  return (
-    
-      <TableHead colSpan={header.colSpan}>
-        <div className="flex items-center gap-1">
-
-       
-        {header.isPlaceholder
-          ? null
-          : flexRender(
-              header.column.columnDef.header,
-              header.getContext()
-            )}
-
-        <TableHeadAction column={header.column}/>    
-        </div>
-      </TableHead>
-
-
-  )
-}
-
-function TableHeadAction({ column }: { column: Column<any, unknown> }) {
-  const { filterVariant, disableFilter, disableSort, disableGroup, disablePin, disableResize, disableReorder } = column.columnDef.meta ?? {}
-
-  return(
-    <div >
-
-      <TooltipButton column={column}/>
-      <FilterButton column={column}/>
-    </div>
-  )
-}
-
-function TooltipButton({ column }: { column: Column<any, unknown> }) {
-  return(
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant={'ghost'} size={"sm"}  onClick={(e) => {
-          console.log(column)
-          const handler = column.getToggleSortingHandler();
-          if (handler) handler(e);
-        }} className="group">
-          {{
-                                asc: <ArrowUpAZ />,
-                                desc: <ArrowDownAZ />,
-                              }[column.getIsSorted() as string] ?? <ArrowUpDown className="opacity-0 group-hover:opacity-100 transition"/>}
-          </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        Sort
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-function FilterButton({ column }: { column: Column<any, unknown> }) {
-  return(
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant={'ghost'} size={"sm"}  onClick={(e) => {
-          console.log(column)
-    
-          
-        }} className="group">
-          <GripVertical className="opacity-0 group-hover:opacity-100 transition"/>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        Filter
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-export { DataTable, TableHeadAction };
+export { ToolTipButton, DataTable, RowDragHandleCell }

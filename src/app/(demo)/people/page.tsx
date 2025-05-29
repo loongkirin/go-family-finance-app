@@ -5,7 +5,7 @@ import React from 'react'
 const page = () => {
   return (
     <div>
-      <FormDist/>
+      {/* <FormDist/> */}
       <PersonTableForm/>
     </div>
   )
