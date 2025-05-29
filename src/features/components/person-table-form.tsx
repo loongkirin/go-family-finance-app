@@ -11,12 +11,6 @@ import { DataTable, RowDragHandleCell } from '@/components/ui/data-table'
 
 const columns : ColumnDef<Person>[] =[
   {
-    id: 'drag-handle',
-    header: 'Move',
-    cell: ({ row }) => <RowDragHandleCell rowId={row.id} />,
-    size: 60,
-  },
-  {
     accessorKey: 'firstName',
     id: 'firstName',
     cell: info => info.getValue(),

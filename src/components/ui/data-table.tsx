@@ -1,16 +1,18 @@
 "use client"
 
 import React, { CSSProperties, useState } from "react"
-import { ArrowUpDown, ArrowUpAZ, ArrowDownAZ, GripVertical, GripHorizontal, ListFilter, Pin } from "lucide-react";
+import { ArrowUpDown, ArrowUpAZ, ArrowDownAZ, GripVertical, GripHorizontal, ListFilter, Pin, PinOff } from "lucide-react";
 import {
+  useReactTable,
   Cell,
   Row,
   ColumnDef,
   Header,
   flexRender,
   getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+  ColumnResizeMode,
+  ColumnResizeDirection,
+} from "@tanstack/react-table"
 
 // needed for table body level scope DnD setup
 import {
@@ -22,17 +24,17 @@ import {
   type DragEndEvent,
   useSensor,
   useSensors,
-} from '@dnd-kit/core'
-import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
+} from "@dnd-kit/core"
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
 import {
   arrayMove,
   SortableContext,
   horizontalListSortingStrategy,  //column horizontal dragg
-} from '@dnd-kit/sortable'
+} from "@dnd-kit/sortable"
 
 // needed for row & cell level scope DnD setup
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import { Button } from "./button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
@@ -50,32 +52,43 @@ function DraggableTableHeader({
 
   const style: CSSProperties = {
     opacity: isDragging ? 0.8 : 1,
-    position: 'relative',
+    position: "relative",
     transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
-    transition: 'width transform 0.5s ease-in-out',
-    whiteSpace: 'nowrap',
+    transition: "width transform 0.5s ease-in-out",
+    whiteSpace: "nowrap",
     width: header.column.getSize(),
     zIndex: isDragging ? 1 : 0,
   }
 
   return (
     <TableHead colSpan={header.colSpan} style={style} ref={setNodeRef}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-1">
         { header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext()) }
         <div className="flex gap-0.5 items-center">
-        <ToolTipButton content="Sort">
-          <ArrowUpDown/>
+        <ToolTipButton content="Sort" className="group">
+        {{
+           asc: <ArrowUpAZ />,
+           desc: <ArrowDownAZ />
+        }[header.column.getIsSorted() as string] ?? <ArrowUpDown className="hidden group-hover:block transition ease-in-out duration-500"/>}
         </ToolTipButton>  
-        <ToolTipButton content="Filter">
-          <ListFilter/>
+        <ToolTipButton content="Filter" className="group">
+          <ListFilter className="hidden group-hover:block transition ease-in-out duration-500"/>
         </ToolTipButton>
-        <ToolTipButton content="Pin">
-          <Pin/>
+        <ToolTipButton content="Pin" className="group">
+          {header.column.getIsPinned() ? <PinOff/> : <Pin className="hidden group-hover:block transition ease-in-out duration-500"/>}
         </ToolTipButton>
-        <ToolTipButton content="ReOrder" {...attributes} {...listeners}>
-          <GripVertical/>
+        <ToolTipButton content="ReOrder" {...attributes} {...listeners} className="group">
+          <GripVertical className="hidden group-hover:block transition ease-in-out duration-500"/>
         </ToolTipButton>
         </div>
+        <div 
+          className={cn("absolute ml-1.5 top-0 h-full w-1 cursor-col-resize select-none touch-none right-0",
+            header.column.getIsResizing() ? "bg-foreground/50" : "",
+          )}
+          onDoubleClick={() =>header.column.resetSize()}
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+        />
       </div>
       
       {/* <button {...attributes} {...listeners} >
@@ -92,9 +105,9 @@ function DraggableCell ({ cell }: { cell: Cell<any, unknown> }) {
 
   const style: CSSProperties = {
     opacity: isDragging ? 0.8 : 1,
-    position: 'relative',
+    position: "relative",
     transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
-    transition: 'width transform 0.5s ease-in-out',
+    transition: "width transform 0.5s ease-in-out",
     width: cell.column.getSize(),
     zIndex: isDragging ? 1 : 0,
   }
@@ -114,12 +127,12 @@ function ToolTipButton({
   return(
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant={'ghost'} className="size-4" {...props} >
+        <Button variant={"ghost"} className="size-4" {...props} >
           {children}
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        <Label className="text-sm">{content}</Label>
+        <Label className="text-xs">{content}</Label>
       </TooltipContent>
     </Tooltip>
   )
@@ -147,7 +160,7 @@ function DraggableRow({ row }: { row: Row<any> }) {
     transition: transition,
     opacity: isDragging ? 0.8 : 1,
     zIndex: isDragging ? 1 : 0,
-    position: 'relative',
+    position: "relative",
   }
   return (
     // connect row ref to dnd-kit, apply important styles
@@ -172,13 +185,20 @@ function DataTable<TData, TValue>({
   data,
   disabled,
 }: DataTableProps<TData, TValue>) {
+  //reorder
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() =>
     columns.map(c => c.id!)
   )
 
+  //resize
+  const [columnResizeMode, setColumnResizeMode] = React.useState<ColumnResizeMode>("onChange")
+  const [columnResizeDirection, setColumnResizeDirection] = React.useState<ColumnResizeDirection>("ltr")
+
   const table = useReactTable({
     data,
     columns,
+    columnResizeMode,
+    columnResizeDirection,
     getCoreRowModel: getCoreRowModel(),
     
     state: {
@@ -209,7 +229,7 @@ function DataTable<TData, TValue>({
   )
 
   return (
-    // NOTE: This provider creates div elements, so don't nest inside of <table> elements
+    // NOTE: This provider creates div elements, so don"t nest inside of <table> elements
     <DndContext
       collisionDetection={closestCenter}
       modifiers={[restrictToHorizontalAxis]}
@@ -218,7 +238,7 @@ function DataTable<TData, TValue>({
     >
       <div className="p-2">
         <Table>
-          <TableHeader>
+          <TableHeader >
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 <SortableContext
@@ -226,7 +246,7 @@ function DataTable<TData, TValue>({
                   strategy={horizontalListSortingStrategy}
                 >
                   {headerGroup.headers.map(header => (
-                    <DraggableTableHeader key={header.id} header={header} />
+                    <DraggableTableHeader key={header.id} header={header}/>
                   ))}
                 </SortableContext>
               </TableRow>
