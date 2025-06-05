@@ -15,14 +15,14 @@ const columns : ColumnDef<Person>[] =[
     accessorKey: 'firstName',
     id: 'firstName',
     cell: info => info.getValue(),
-    // size: 200,
+    size: 200,
   },
   {
     accessorFn: row => row.lastName,
     id: 'lastName',
     cell: info => info.getValue(),
     header: () => <span>Last Name</span>,
-    // size: 200,
+    size: 200,
   },
   {
     accessorKey: 'age',
@@ -31,7 +31,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'range',
     },
-    // size: 200,
+    size: 200,
   },
   {
     accessorKey: 'visits',
@@ -40,7 +40,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'range',
     },
-    // size: 200,
+    size: 200,
   },
   {
     accessorKey: 'status',
@@ -49,7 +49,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'select',
     },
-    // size: 200,
+    size: 200,
   },
   {
     accessorKey: 'progress',
@@ -58,7 +58,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'range',
     },
-    // size: 300,
+    size: 300,
   },
 ]
 
@@ -67,7 +67,7 @@ const columns : ColumnDef<Person>[] =[
 function PersonTableForm() {
   const [data, setData] = useState([] as Person[]);
   useEffect(() => {
-    const tempData = makeData(10);
+    const tempData = makeData(55);
     setData(tempData)
   }, [])
   // const columns = React.useMemo<ColumnDef<Person>[]>(

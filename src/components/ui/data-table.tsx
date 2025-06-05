@@ -10,12 +10,21 @@ import {
   Header,
   flexRender,
   getCoreRowModel,
+
   ColumnResizeMode,
   ColumnResizeDirection,
 
-  getSortedRowModel,
   SortingFn,
   SortingState,
+  getSortedRowModel,
+
+  ColumnFiltersState,
+  getFilteredRowModel,
+
+  PaginationState,
+  getPaginationRowModel,
+
+  RowData,
 } from "@tanstack/react-table"
 
 // needed for table body level scope DnD setup
@@ -47,6 +56,13 @@ import { cn } from "@/lib/utils";
 import { Input } from "./input";
 
 const SYSTEM_SELECT_COLUMN_ID = "__select"
+
+declare module '@tanstack/react-table' {
+  //allows us to define custom properties for our columns
+  interface ColumnMeta<TData extends RowData, TValue> {
+    filterVariant?: 'text' | 'range' | 'select'
+  }
+}
 
 function DraggableTableHeader({
   header,
@@ -307,8 +323,21 @@ function DataTable<TData, TValue>({
   //resize
   const [columnResizeMode, setColumnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [columnResizeDirection, setColumnResizeDirection] = React.useState<ColumnResizeDirection>("ltr")
+
+  //selection
   const [rowSelection, setRowSelection] = React.useState({})
+
+  //sorting
   const [sorting, setSorting] = React.useState<SortingState>([])
+
+  //filtering
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+
+  //pagination
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
 
   const table = useReactTable({
     data,
@@ -320,20 +349,30 @@ function DataTable<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
 
-   enableRowSelection: true, //enable row selection for all rows
+    enableRowSelection: true, //enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
 
+    // manualSorting: true, //we're doing manual "server-side" sorting
     getSortedRowModel: getSortedRowModel(), //client-side sorting
     onSortingChange: setSorting, //optionally control sorting state in your own scope for easy access
     // sortingFns: {
     //   sortStatusFn, //or provide our custom sorting function globally for all columns to be able to use
     // },
 
+    manualFiltering: true, //we're doing manual "server-side" filtering
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(), //client side filtering
+
+    // manualPagination: true, //we're doing manual "server-side" pagination
+    onPaginationChange: setPagination,
+    getPaginationRowModel: getPaginationRowModel(), //client-side pagination
 
     state: {
       columnOrder,
       rowSelection,
       sorting,
+      columnFilters,
+      pagination,
     },
     
     debugTable: true,
@@ -399,6 +438,70 @@ function DataTable<TData, TValue>({
             ))}
           </TableBody>
         </Table>
+        <div className="h-2" />
+        <div className="flex items-center gap-2 justify-end">
+          <Button
+            className="border rounded p-1" variant={"outline"} size={"sm"}
+            onClick={() => table.firstPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {'<<'}
+          </Button>
+          <Button
+            className="border rounded p-1" variant={"outline"} size={"sm"}
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {'<'}
+          </Button>
+          <Button
+            className="border rounded p-1" variant={"outline"} size={"sm"}
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            {'>'}
+          </Button>
+          <Button
+            className="border rounded p-1" variant={"outline"} size={"sm"}
+            onClick={() => table.lastPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            {'>>'}
+          </Button>
+          <span className="flex items-center gap-1">
+            <div>Page</div>
+            <strong>
+              {table.getState().pagination.pageIndex + 1} of{' '}
+              {table.getPageCount().toLocaleString()}
+            </strong>
+          </span>
+          <span className="flex items-center gap-1">
+            | Go to page:
+            <input
+              type="number"
+              min="1"
+              max={table.getPageCount()}
+              defaultValue={table.getState().pagination.pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                table.setPageIndex(page)
+              }}
+              className="border p-1 rounded w-16"
+            />
+          </span>
+          <select
+            value={table.getState().pagination.pageSize}
+            onChange={e => {
+              table.setPageSize(Number(e.target.value))
+            }}
+          >
+            {[10, 20, 30, 40, 50].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
         <pre>{JSON.stringify(data, null, 2)}</pre>
       </div>
     </DndContext>
