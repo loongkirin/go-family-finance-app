@@ -1,6 +1,6 @@
 "use client"
 
-import React, { CSSProperties } from "react"
+import React, { CSSProperties, useState } from "react"
 import { ArrowUpDown, ArrowUpAZ, ArrowDownAZ, GripVertical, GripHorizontal, ListFilter, Pin, PinOff } from "lucide-react";
 import {
   useReactTable,
@@ -12,10 +12,6 @@ import {
   getCoreRowModel,
   ColumnResizeMode,
   ColumnResizeDirection,
-
-  getSortedRowModel,
-  SortingFn,
-  SortingState,
 } from "@tanstack/react-table"
 
 // needed for table body level scope DnD setup
@@ -44,9 +40,6 @@ import { Button } from "./button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import { Label } from "./label";
 import { cn } from "@/lib/utils";
-import { Input } from "./input";
-
-const SYSTEM_SELECT_COLUMN_ID = "__select"
 
 function DraggableTableHeader({
   header,
@@ -56,70 +49,62 @@ function DraggableTableHeader({
   const { attributes, isDragging, listeners, setNodeRef, transform } =  useSortable({
     id: header.column.id
   })
-
   const isPinned = header.column.getIsPinned()
   const isLastLeftPinnedColumn =
-    isPinned === "left" && header.column.getIsLastColumn("left")
+    isPinned === 'left' && header.column.getIsLastColumn('left')
   const isFirstRightPinnedColumn =
-    isPinned === "right" && header.column.getIsFirstColumn("right")
+    isPinned === 'right' && header.column.getIsFirstColumn('right')
 
   const style: CSSProperties = {
     boxShadow: isLastLeftPinnedColumn
-      ? "-4px 0 4px -4px gray inset"
+      ? '-4px 0 4px -4px gray inset'
       : isFirstRightPinnedColumn
-        ? "4px 0 4px -4px gray inset"
+        ? '4px 0 4px -4px gray inset'
         : undefined,
-    left: isPinned === "left" ? `${header.column.getStart("left")}px` : undefined,
-    right: isPinned === "right" ? `${header.column.getAfter("right")}px` : undefined,
-    opacity: isDragging || isPinned ? 0.9 : 1,
-    position: isPinned ? "sticky" : "relative",
+    left: isPinned === 'left' ? `${header.column.getStart('left') + 20}px` : undefined,
+    right: isPinned === 'right' ? `${header.column.getAfter('right') + 20}px` : undefined,
+    opacity: isDragging || isPinned ? 0.8 : 1,
+    position: isPinned ? 'sticky' : 'relative',
     transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
     transition: "width transform 0.5s ease-in-out",
     whiteSpace: "nowrap",
-    width: header.column.getSize(),
+    width: header.column.getSize() + 30,
     minWidth: header.column.getSize(),
     zIndex: isDragging || isPinned ? 1 : 0,
   }
 
   return (
-    <TableHead colSpan={header.colSpan} ref={setNodeRef} style={style} className={`${isPinned ? "bg-background" : ""}`}>
-      <div className={cn("flex items-center", `${header.column.id === SYSTEM_SELECT_COLUMN_ID ? "justify-center" : "justify-between gap-1"}`)}>
-        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-        {header.column.id !== SYSTEM_SELECT_COLUMN_ID &&  
-        <>
-          <div className="flex gap-0.5 items-center">
-            {header.column.getCanSort() && 
-            <ToolTipButton content="Sort" className="group" onClick={header.column.getToggleSortingHandler()}>
-            {{
-              asc: <ArrowUpAZ />,
-              desc: <ArrowDownAZ />
-            }[header.column.getIsSorted() as string] ?? <ArrowUpDown className="hidden group-hover:block transition ease-in-out duration-500"/>}
-            </ToolTipButton>}
-            {header.column.getCanFilter() &&  
-            <ToolTipButton content="Filter" className="group">
-              <ListFilter className="hidden group-hover:block transition ease-in-out duration-500"/>
-            </ToolTipButton>}
-            {header.column.getCanPin() &&
-            <ToolTipButton content="Pin" className="group" onClick={() => {
-              // console.log("isPinned:",isPinned)
-              isPinned ? header.column.pin(false) : header.column.pin("left")
-            }}>
-            {header.column.getIsPinned() ? <PinOff/> : <Pin className="hidden group-hover:block transition ease-in-out duration-500"/>}
-            </ToolTipButton>}
-            {!header.column.getIsPinned() && 
-            <ToolTipButton content="ReOrder" {...attributes} {...listeners} className="group" suppressHydrationWarning>
-              <GripVertical className="hidden group-hover:block transition ease-in-out duration-500"/>
-            </ToolTipButton>}
-          </div> 
-          <div 
-            className={cn("absolute ml-1.5 top-0 h-full w-1 cursor-col-resize select-none touch-none right-0",
-                `${header.column.getIsResizing() ? "bg-foreground/50" : ""}`,
-            )}
-            onDoubleClick={() =>header.column.resetSize()}
-            onMouseDown={header.getResizeHandler()}
-            onTouchStart={header.getResizeHandler()}
-          />  
-        </>}
+    <TableHead colSpan={header.colSpan} style={style} ref={setNodeRef}>
+      <div className="flex items-center justify-between gap-1">
+        { header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext()) }
+        <div className="flex gap-0.5 items-center">
+        <ToolTipButton content="Sort" className="group">
+        {{
+           asc: <ArrowUpAZ />,
+           desc: <ArrowDownAZ />
+        }[header.column.getIsSorted() as string] ?? <ArrowUpDown className="hidden group-hover:block transition ease-in-out duration-500"/>}
+        </ToolTipButton>  
+        <ToolTipButton content="Filter" className="group">
+          <ListFilter className="hidden group-hover:block transition ease-in-out duration-500"/>
+        </ToolTipButton>
+        <ToolTipButton content="Pin" className="group" onClick={() => {
+          console.log("isPinned:",isPinned)
+          isPinned ? header.column.pin(false) : header.column.pin("left")
+        }}>
+          {header.column.getIsPinned() ? <PinOff/> : <Pin className="hidden group-hover:block transition ease-in-out duration-500"/>}
+        </ToolTipButton>
+        {!header.column.getIsPinned() && <ToolTipButton content="ReOrder" {...attributes} {...listeners} className="group" suppressHydrationWarning>
+          <GripVertical className="hidden group-hover:block transition ease-in-out duration-500"/>
+        </ToolTipButton> }
+        </div>
+        <div 
+          className={cn("absolute ml-1.5 top-0 h-full w-1 cursor-col-resize select-none touch-none right-0",
+            header.column.getIsResizing() ? "bg-foreground/50" : "",
+          )}
+          onDoubleClick={() =>header.column.resetSize()}
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+        />
       </div>
       
       {/* <button {...attributes} {...listeners} >
@@ -135,29 +120,29 @@ function DraggableCell ({ cell }: { cell: Cell<any, unknown> }) {
   })
   const isPinned = cell.column.getIsPinned()
   const isLastLeftPinnedColumn =
-    isPinned === "left" && cell.column.getIsLastColumn("left")
+    isPinned === 'left' && cell.column.getIsLastColumn('left')
   const isFirstRightPinnedColumn =
-    isPinned === "right" && cell.column.getIsFirstColumn("right")
+    isPinned === 'right' && cell.column.getIsFirstColumn('right')
 
   const style: CSSProperties = {
     boxShadow: isLastLeftPinnedColumn
-      ? "-4px 0 4px -4px gray inset"
+      ? '-4px 0 4px -4px gray inset'
       : isFirstRightPinnedColumn
-        ? "4px 0 4px -4px gray inset"
+        ? '4px 0 4px -4px gray inset'
         : undefined,
-    left: isPinned === "left" ? `${cell.column.getStart("left")}px` : undefined,
-    right: isPinned === "right" ? `${cell.column.getAfter("right")}px` : undefined,
-    opacity: isDragging || isPinned ? 0.9 : 1,
-    position: isPinned ? "sticky" : "relative",
+    left: isPinned === 'left' ? `${cell.column.getStart('left') + 20}px` : undefined,
+    right: isPinned === 'right' ? `${cell.column.getAfter('right') + 20}px` : undefined,
+    opacity: isDragging || isPinned ? 0.8 : 1,
+    position: isPinned ? 'sticky' : 'relative',
     transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
-    transition: "width transform ",
+    transition: "width transform 0.5s ease-in-out",
     width: cell.column.getSize(),
     minWidth: cell.column.getSize(),
     zIndex: isDragging || isPinned ? 1 : 0,
   }
 
   return (
-    <TableCell ref={setNodeRef} style={style} className={`${isPinned ? "bg-background" : ""}`}>
+    <TableCell style={style} ref={setNodeRef}>
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   )
@@ -202,7 +187,7 @@ function DraggableRow({ row }: { row: Row<any> }) {
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform), //let dnd-kit do its thing
     transition: transition,
-    opacity: isDragging ? 0.9 : 1,
+    opacity: isDragging ? 0.8 : 1,
     zIndex: isDragging ? 1 : 0,
     position: "relative",
   }
@@ -218,60 +203,6 @@ function DraggableRow({ row }: { row: Row<any> }) {
   )
 }
 
-function IndeterminateCheckbox({
-  indeterminate,
-  className,
-  ...props
-}: { indeterminate?: boolean } & React.ComponentProps<"input">) {
-  const ref = React.useRef<HTMLInputElement>(null!)
-
-  React.useEffect(() => {
-    if (typeof indeterminate === "boolean") {
-      ref.current.indeterminate = !props.checked && indeterminate
-    }
-  }, [ref, indeterminate])
-
-  return (
-    <Input
-      type="checkbox"
-      ref={ref}
-      className={cn("cursor-pointer size-4", className)}
-      {...props}
-    />
-  )
-}
-
-function getSystemColumnDef<TData, TValue>() : ColumnDef<TData, TValue>[] {
-  const columns : ColumnDef<TData, TValue>[] =[
-    {
-      id: SYSTEM_SELECT_COLUMN_ID,
-      header: ({ table }) => (
-        <IndeterminateCheckbox
-          {...{
-            checked: table.getIsAllPageRowsSelected(),
-            indeterminate: table.getIsSomePageRowsSelected(),
-            onChange: table.getToggleAllPageRowsSelectedHandler(),
-          }}
-        />
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <IndeterminateCheckbox
-            {...{
-              checked: row.getIsSelected(),
-              disabled: !row.getCanSelect(),
-              indeterminate: row.getIsSomeSelected(),
-              onChange: row.getToggleSelectedHandler(),
-            }}
-          />
-        </div>
-      ),
-      size: 80,
-    },
-  ]
-  return columns;
-}
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
@@ -283,59 +214,26 @@ function DataTable<TData, TValue>({
   data,
   disabled,
 }: DataTableProps<TData, TValue>) {
-  const tableColumns = React.useMemo<ColumnDef<TData, TValue>[]>(() => {
-    const checkColums = getSystemColumnDef<TData, TValue>();
-    return [...checkColums, ...columns];
-  },[columns]);
-
-  // console.log(tableColumns);
-
   //reorder
-  const [columnOrder, setColumnOrder] = React.useState<string[]>(() => {
-    // columns.map(c => c.id!)
-    // 先把 __select 放前面，再加上其他列
-    const allIds = tableColumns.map(c => c.id!);
-    // 确保 __select 在最前面
-    const selectIndex = allIds.indexOf(SYSTEM_SELECT_COLUMN_ID);
-    if (selectIndex > 0) {
-      allIds.splice(selectIndex, 1);
-      allIds.unshift(SYSTEM_SELECT_COLUMN_ID);
-    }
-    return allIds;
-  })
+  const [columnOrder, setColumnOrder] = React.useState<string[]>(() =>
+    columns.map(c => c.id!)
+  )
 
   //resize
   const [columnResizeMode, setColumnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [columnResizeDirection, setColumnResizeDirection] = React.useState<ColumnResizeDirection>("ltr")
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [sorting, setSorting] = React.useState<SortingState>([])
 
   const table = useReactTable({
     data,
-    columns: tableColumns,
+    columns,
     columnResizeMode,
     columnResizeDirection,
-
     getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: setRowSelection,
-    onColumnOrderChange: setColumnOrder,
-
-   enableRowSelection: true, //enable row selection for all rows
-    // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
-
-    getSortedRowModel: getSortedRowModel(), //client-side sorting
-    onSortingChange: setSorting, //optionally control sorting state in your own scope for easy access
-    // sortingFns: {
-    //   sortStatusFn, //or provide our custom sorting function globally for all columns to be able to use
-    // },
-
-
+    
     state: {
       columnOrder,
-      rowSelection,
-      sorting,
     },
-    
+    onColumnOrderChange: setColumnOrder,
     debugTable: true,
     debugHeaders: true,
     debugColumns: true,
@@ -368,7 +266,7 @@ function DataTable<TData, TValue>({
       sensors={sensors}
     >
       <div className="p-2">
-        <Table className="table-fixed">
+        <Table>
           <TableHeader >
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
@@ -405,4 +303,4 @@ function DataTable<TData, TValue>({
   )
 }
 
-export { ToolTipButton, DataTable, RowDragHandleCell, IndeterminateCheckbox }
+export { ToolTipButton, DataTable, RowDragHandleCell }

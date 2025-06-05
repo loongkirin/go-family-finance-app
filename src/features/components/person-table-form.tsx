@@ -6,7 +6,8 @@ import {
 } from '@tanstack/react-table'
 
 import { makeData, Person } from '@/features/accounts/makeData'
-import { DataTable, RowDragHandleCell } from '@/components/ui/data-table'
+import { DataTable, IndeterminateCheckbox, RowDragHandleCell } from '@/components/ui/data-table'
+import { Checkbox } from '@/components/ui/checkbox'
 
 
 const columns : ColumnDef<Person>[] =[
@@ -14,12 +15,14 @@ const columns : ColumnDef<Person>[] =[
     accessorKey: 'firstName',
     id: 'firstName',
     cell: info => info.getValue(),
+    // size: 200,
   },
   {
     accessorFn: row => row.lastName,
     id: 'lastName',
     cell: info => info.getValue(),
     header: () => <span>Last Name</span>,
+    // size: 200,
   },
   {
     accessorKey: 'age',
@@ -28,6 +31,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'range',
     },
+    // size: 200,
   },
   {
     accessorKey: 'visits',
@@ -36,6 +40,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'range',
     },
+    // size: 200,
   },
   {
     accessorKey: 'status',
@@ -44,6 +49,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'select',
     },
+    // size: 200,
   },
   {
     accessorKey: 'progress',
@@ -52,6 +58,7 @@ const columns : ColumnDef<Person>[] =[
     meta: {
       filterVariant: 'range',
     },
+    // size: 300,
   },
 ]
 
@@ -110,6 +117,7 @@ function PersonTableForm() {
   return (
     <div className="p-2">
       <DataTable columns={columns} data={data}/>
+      <Checkbox defaultChecked = "indeterminate"/>
     </div>
   )
 }
