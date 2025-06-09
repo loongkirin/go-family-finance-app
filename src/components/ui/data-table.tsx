@@ -1,8 +1,18 @@
 "use client"
 
 import React, { CSSProperties } from "react"
-import { ArrowUpDown, ArrowUpAZ, ArrowDownAZ, GripVertical, GripHorizontal, ListFilter, Pin, PinOff } from "lucide-react";
+import { 
+  ArrowUpDown, 
+  ArrowUpAZ, 
+  ArrowDownAZ, 
+  GripVertical, 
+  GripHorizontal, 
+  ListFilter, 
+  Pin, 
+  PinOff, 
+  Settings } from "lucide-react";
 import {
+  Table as TanStackTable,
   useReactTable,
   Cell,
   Row,
@@ -24,6 +34,9 @@ import {
   PaginationState,
   getPaginationRowModel,
 
+  ColumnPinningState,
+  RowSelectionState,
+  VisibilityState,
   RowData,
 } from "@tanstack/react-table"
 
@@ -39,23 +52,27 @@ import {
   useSensors,
 } from "@dnd-kit/core"
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
+import { arrayMove, SortableContext,
   horizontalListSortingStrategy,  //column horizontal dragg
+  useSortable, //needed for row & cell level scope DnD setup
 } from "@dnd-kit/sortable"
-
-// needed for row & cell level scope DnD setup
-import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import { Button } from "./button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import { Label } from "./label";
-import { cn } from "@/lib/utils";
 import { Input } from "./input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./select";
+
+import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./sheet";
+import { Separator } from "./separator";
+import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
+import { Switch } from "./switch";
 
 const SYSTEM_SELECT_COLUMN_ID = "__select"
+const SYSTEM_SN_COLUMN_ID = "__sn"
+const PAGE_SIZE_LIST = [10, 20, 50, 100, 200]
 
 declare module '@tanstack/react-table' {
   //allows us to define custom properties for our columns
@@ -74,10 +91,9 @@ function DraggableTableHeader({
   })
 
   const isPinned = header.column.getIsPinned()
-  const isLastLeftPinnedColumn =
-    isPinned === "left" && header.column.getIsLastColumn("left")
-  const isFirstRightPinnedColumn =
-    isPinned === "right" && header.column.getIsFirstColumn("right")
+  const isLastLeftPinnedColumn = isPinned === "left" && header.column.getIsLastColumn("left")
+  const isFirstRightPinnedColumn = isPinned === "right" && header.column.getIsFirstColumn("right")
+  const isSystemColumn = header.column.id === SYSTEM_SELECT_COLUMN_ID || header.column.id === SYSTEM_SN_COLUMN_ID
 
   const style: CSSProperties = {
     boxShadow: isLastLeftPinnedColumn
@@ -99,9 +115,9 @@ function DraggableTableHeader({
 
   return (
     <TableHead colSpan={header.colSpan} ref={setNodeRef} style={style} className={`${isPinned ? "bg-background" : ""}`}>
-      <div className={cn("flex items-center", `${header.column.id === SYSTEM_SELECT_COLUMN_ID ? "justify-center" : "justify-between gap-1"}`)}>
+      <div className={cn("flex items-center", `${ isSystemColumn ? "justify-center" : "justify-between gap-1"}`)}>
         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-        {header.column.id !== SYSTEM_SELECT_COLUMN_ID &&  
+        {!isSystemColumn &&  
         <>
           <div className="flex gap-0.5 items-center">
             {header.column.getCanSort() && 
@@ -234,6 +250,67 @@ function DraggableRow({ row }: { row: Row<any> }) {
   )
 }
 
+function TableSettings<TData>({table} : { table: TanStackTable<TData>}) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <ToolTipButton content="Data Table Settings" className="ml-auto">
+          <Settings/>
+        </ToolTipButton>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader className="pb-0">
+          <SheetTitle className="text-base">Data Table Settings</SheetTitle>
+        </SheetHeader>
+        <Separator/>
+        <div className="pt-1 px-6 flex flex-col gap-3">
+          <Label className="font-semibold">Data Table Setting</Label>
+          <div className="flex gap-4 items-center justify-between pt-3">
+            <Label>Page Size:</Label>
+            <ToggleGroup variant="outline" type="single" 
+              defaultValue={table.getState().pagination.pageSize.toString()}
+              onValueChange={(pageSize) => {table.setPageSize(Number(pageSize))}}>
+                {PAGE_SIZE_LIST.map(pageSize => {
+                  return(
+                    <ToggleGroupItem key={pageSize} value={pageSize.toString()} aria-label={pageSize.toString()}>
+                      <Label className="h-4 w-6 text-sm">{pageSize}</Label>
+                    </ToggleGroupItem>
+                  )
+                })}
+            </ToggleGroup>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label>Show SN:</Label>
+            <Switch id="table-sn-checked" checked={table.getColumn(SYSTEM_SN_COLUMN_ID)?.getIsVisible()} 
+              onCheckedChange={checked => table.getColumn(SYSTEM_SN_COLUMN_ID)?.toggleVisibility(checked)}/>
+          </div>
+        </div>
+        <Separator/>
+        <div className="pt-1 px-6 flex flex-col gap-3">
+          <Label className="font-semibold">Data Column Setting</Label>
+          <div className="flex items-center justify-between pt-3">
+            <Label>Show All Columns</Label>
+            <Switch checked={table.getIsAllColumnsVisible()} 
+              onCheckedChange={checked => table.toggleAllColumnsVisible(checked)}/>
+          </div>
+          {table.getAllLeafColumns().map(column=> {
+            if(column.id === SYSTEM_SELECT_COLUMN_ID || column.id === SYSTEM_SN_COLUMN_ID) {
+              return null
+            }
+            return(
+              <div className="flex items-center justify-between" key={column.id}>
+                <Label>{column.id}</Label>
+                <Switch id={column.id} checked={column.getIsVisible()} 
+                  onCheckedChange={checked => column.toggleVisibility(checked)}/>
+              </div>
+            )
+          })}          
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
 function IndeterminateCheckbox({
   indeterminate,
   className,
@@ -282,7 +359,17 @@ function getSystemColumnDef<TData, TValue>() : ColumnDef<TData, TValue>[] {
           />
         </div>
       ),
-      size: 80,
+      size: 60,
+    },
+    {
+      id: SYSTEM_SN_COLUMN_ID,
+      header: "#",
+      cell: ({ row, table }) => (
+        <div className="flex justify-center text-center">
+          {row.index + 1 - table.getState().pagination.pageIndex * table.getState().pagination.pageSize}
+        </div>
+      ),
+      size: 60,
     },
   ]
   return columns;
@@ -308,24 +395,27 @@ function DataTable<TData, TValue>({
 
   //reorder
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => {
-    // columns.map(c => c.id!)
+    return columns.map(c => c.id!)
     // 先把 __select 放前面，再加上其他列
-    const allIds = tableColumns.map(c => c.id!);
-    // 确保 __select 在最前面
-    const selectIndex = allIds.indexOf(SYSTEM_SELECT_COLUMN_ID);
-    if (selectIndex > 0) {
-      allIds.splice(selectIndex, 1);
-      allIds.unshift(SYSTEM_SELECT_COLUMN_ID);
-    }
-    return allIds;
+    // const allIds = tableColumns.map(c => c.id!);
+    // // 确保 __select 在最前面
+    // const selectIndex = allIds.indexOf(SYSTEM_SELECT_COLUMN_ID);
+    // if (selectIndex > 0) {
+    //   allIds.splice(selectIndex, 1);
+    //   allIds.unshift(SYSTEM_SELECT_COLUMN_ID);
+    // }
+    // return allIds;
   })
+
+  //pinning
+  const [columnPinning, setColumnPinning] = React.useState<ColumnPinningState>({left: [SYSTEM_SELECT_COLUMN_ID, SYSTEM_SN_COLUMN_ID],  right: [],})
 
   //resize
   const [columnResizeMode, setColumnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [columnResizeDirection, setColumnResizeDirection] = React.useState<ColumnResizeDirection>("ltr")
 
   //selection
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
 
   //sorting
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -339,6 +429,9 @@ function DataTable<TData, TValue>({
     pageSize: 10,
   })
 
+  //column visibility
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+
   const table = useReactTable({
     data,
     columns: tableColumns,
@@ -346,8 +439,9 @@ function DataTable<TData, TValue>({
     columnResizeDirection,
 
     getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: setRowSelection,
-    onColumnOrderChange: setColumnOrder,
+    onColumnPinningChange: setColumnPinning, //column pinning
+    onRowSelectionChange: setRowSelection,  //row selection
+    onColumnOrderChange: setColumnOrder,  //column order
 
     enableRowSelection: true, //enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
@@ -367,12 +461,16 @@ function DataTable<TData, TValue>({
     onPaginationChange: setPagination,
     getPaginationRowModel: getPaginationRowModel(), //client-side pagination
 
+    onColumnVisibilityChange: setColumnVisibility,  //column visibility
+
     state: {
       columnOrder,
+      columnPinning,
       rowSelection,
       sorting,
       columnFilters,
       pagination,
+      columnVisibility,
     },
     
     debugTable: true,
@@ -406,7 +504,8 @@ function DataTable<TData, TValue>({
       onDragEnd={handleColumnDragEnd}
       sensors={sensors}
     >
-      <div className="p-2">
+      <div className="p-2 flex flex-col gap-1">
+        <TableSettings table={table}/>
         <Table className="table-fixed">
           <TableHeader >
             {table.getHeaderGroups().map(headerGroup => (
@@ -477,7 +576,7 @@ function DataTable<TData, TValue>({
           </span>
           <span className="flex items-center gap-1">
             | Go to page:
-            <input
+            <Input
               type="number"
               min="1"
               max={table.getPageCount()}
@@ -486,10 +585,10 @@ function DataTable<TData, TValue>({
                 const page = e.target.value ? Number(e.target.value) - 1 : 0
                 table.setPageIndex(page)
               }}
-              className="border p-1 rounded w-16"
+              className="border p-1 rounded w-16 h-8"
             />
           </span>
-          <select
+          {/* <select
             value={table.getState().pagination.pageSize}
             onChange={e => {
               table.setPageSize(Number(e.target.value))
@@ -500,7 +599,21 @@ function DataTable<TData, TValue>({
                 Show {pageSize}
               </option>
             ))}
-          </select>
+          </select> */}
+          <Select value={table.getState().pagination.pageSize?.toString()} onValueChange={(pageSize) => {table.setPageSize(Number(pageSize))}}>
+            <SelectTrigger size="sm" className="w-auto py-0 rounded">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {PAGE_SIZE_LIST.map(pageSize => (
+                  <SelectItem key={pageSize} value={pageSize.toString()}>
+                    Show {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <pre>{JSON.stringify(data, null, 2)}</pre>
       </div>
