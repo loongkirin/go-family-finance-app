@@ -163,7 +163,7 @@ export const FormDist = () => {
           />
           <form.AppField 
             name="birthday"
-            children={(field) => <field.FormDatePickerTestField label="Birthday" orientation={"horizontal"} startMonth={new Date(1925, 1)}  endMonth={new Date(2099,12)} locale={zhCN}  classesName={{content:"h-4 py-0"}}/>}
+            children={(field) => <field.FormDatePickerMultipleField mode="multiple" captionLayout={"dropdown"} label="Birthday" orientation={"horizontal"} startMonth={new Date(1925, 1)}  endMonth={new Date(2099,12)} locale={zhCN}  classesName={{content:"h-4 py-0"}}/>}
           />
           <form.AppField
             name="captcha"

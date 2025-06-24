@@ -23,7 +23,9 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { DropdownOption, Captcha as CaptchaValue } from "@/types/ui-componet-types"
 import useCaptcha from "@/hooks/use-captcha"
-import { DatePicker, DatePickerProps } from "./date-picker"
+import { DatePicker, DatePickerMultiple, DatePickerProps, DatePickerRange, DatePickerSingle, DatePickerSingleProps } from "./date-picker"
+import { fa } from "@faker-js/faker"
+import { DateRange } from "react-day-picker"
 
 
 function Form({ className, ...props }: React.ComponentProps<"div">) {
@@ -427,6 +429,7 @@ function FormSwitchField({ classesName, label, showLabel=true, orientation, show
 function FormDatePickerField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", className, defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & {
   defaultMonth?: Date, startMonth?: Date, endMonth?: Date
 }) {
+  const [open, setOpen] = React.useState(false)
   return (
     <FormField<string> 
       classesName={classesName} 
@@ -436,7 +439,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
       showError={showError}
       render={(field) => (
         <>
-          <Popover>
+          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant={"outline"}
@@ -459,6 +462,7 @@ function FormDatePickerField({ classesName, label, showLabel=true, orientation, 
                     const dateString = format(e, "yyyy-MM-dd")
                     field.handleChange(dateString)
                   }
+                  setOpen(false)
                 }}
                 onDayBlur={field.handleBlur}
                 captionLayout="dropdown"
@@ -620,7 +624,7 @@ function FormCaptchaField({ classesName, label, showLabel=true, orientation, sho
   )
 }
 
-function FormDatePickerTestField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", className, defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & DatePickerProps) {
+function FormDatePickerTestField({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", className, defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & DatePickerSingleProps) {
   return (
     <FormField<Date|undefined> 
       classesName={classesName} 
@@ -629,10 +633,9 @@ function FormDatePickerTestField({ classesName, label, showLabel=true, orientati
       orientation={orientation}
       showError={showError}
       render={(field) => (
-        <DatePicker  
-
+        <DatePickerSingle
         // value={new Date(field.state.value?? format(Date.now(), "PPP"))}
-        value={field.state.value?? Date.now()}
+        value={field.state.value}
         onChange={(e) => {
           if(e) {
             console.log("e:", e)
@@ -654,6 +657,86 @@ function FormDatePickerTestField({ classesName, label, showLabel=true, orientati
   )
 }
 
+function FormDatePicker({ classesName, label, showLabel=true, orientation, showError=true, placeholder="Pick a date", mode, className, defaultMonth, startMonth, endMonth, ...props } : FormFieldProps & React.ComponentProps<typeof DatePickerSingle>) {
+  return (
+    <FormField<Date | undefined>
+      classesName={classesName}
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <DatePickerSingle
+          mode="single"
+          value={field.state.value instanceof Date ? field.state.value : undefined}
+          onChange={(e) => field.handleChange(e)}
+          {...props}
+        />
+      )}
+    />
+  )
+}
+
+function FormDatePickerRangeField({ classesName, label, showLabel=true, orientation, showError=true, className, ...props } : FormFieldProps & React.ComponentProps<typeof DatePickerRange>) {
+  return (
+    <FormField<DateRange | undefined> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <>
+          <DatePickerRange
+            value={field.state.value}
+            onChange={(e) => field.handleChange(e)}
+            {...props}
+          />
+        </>
+      )}
+    />
+  )     
+}
+
+function FormDatePickerMultipleField({ classesName, label, showLabel=true, orientation, showError=true, className, ...props } : FormFieldProps & React.ComponentProps<typeof DatePickerMultiple>) {
+  return (
+    <FormField<Date[] | undefined> 
+      classesName={classesName} 
+      showLabel={showLabel}
+      label={label}
+      orientation={orientation}
+      showError={showError}
+      render={(field) => (
+        <>
+          <DatePickerMultiple
+            value={field.state.value}
+            onChange={(e) => field.handleChange(e)}
+            {...props}
+          />
+        </>
+      )}
+    />
+  )     
+}
+
+function FormDatePickerField1({ label, mode, value, onChange, ...props }: { label: string } & React.ComponentProps<typeof DatePicker>) {
+  const field = useFieldContext<string>()
+  const errors = useStore(field.store, (state) => state.meta.errors)
+  
+  return (
+    <FormFieldRoot>
+      <Label htmlFor={field.name}>{label}</Label>
+      <DatePicker mode={mode}/>
+        
+      {errors.map((error:any, index:number) => (
+        <FormFieldError key={index}>
+          {error.message}
+        </FormFieldError>
+      ))}
+    </FormFieldRoot>
+  )
+}
+
 export {
   Form,
   FormHeader,
@@ -669,9 +752,13 @@ export {
   FormCheckboxField,
   FormSwitchField,
   FormDatePickerField,
+  FormDatePicker,
+  FormDatePickerRangeField,
+  FormDatePickerMultipleField,
   FormComboboxField,
   FormSelectField,
   FormRadioGroupField,
   FormCaptchaField,
   FormDatePickerTestField,
+  FormDatePickerField1,
 }

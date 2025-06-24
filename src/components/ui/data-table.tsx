@@ -10,7 +10,8 @@ import {
   ListFilter, 
   Pin, 
   PinOff, 
-  Settings } from "lucide-react";
+  Settings,
+  XIcon } from "lucide-react";
 import {
   Table as TanStackTable,
   useReactTable,
@@ -38,6 +39,7 @@ import {
   RowSelectionState,
   VisibilityState,
   RowData,
+  Column,
 } from "@tanstack/react-table"
 
 // needed for table body level scope DnD setup
@@ -63,12 +65,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 import { Label } from "./label";
 import { Input } from "./input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./select";
-
-import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./sheet";
 import { Separator } from "./separator";
 import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 import { Switch } from "./switch";
+import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "./popover";
+
+import { cn } from "@/lib/utils";
 
 const SYSTEM_SELECT_COLUMN_ID = "__select"
 const SYSTEM_SN_COLUMN_ID = "__sn"
@@ -83,9 +86,11 @@ declare module '@tanstack/react-table' {
 
 function DraggableTableHeader({
   header,
+  className,
+  ...props
 }: {
-  header: Header<any, unknown>
-}) {
+  header: Header<any, unknown>,
+} & React.ComponentProps<typeof TableHead>) {
   const { attributes, isDragging, listeners, setNodeRef, transform } =  useSortable({
     id: header.column.id
   })
@@ -114,7 +119,8 @@ function DraggableTableHeader({
   }
 
   return (
-    <TableHead colSpan={header.colSpan} ref={setNodeRef} style={style} className={`${isPinned ? "bg-background" : ""}`}>
+    <TableHead colSpan={header.colSpan} ref={setNodeRef} style={style} 
+      className={cn(`${isPinned ? "bg-background" : "bg-muted"}`, className)} {...props}>
       <div className={cn("flex items-center", `${ isSystemColumn ? "justify-center" : "justify-between gap-1"}`)}>
         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
         {!isSystemColumn &&  
@@ -128,17 +134,19 @@ function DraggableTableHeader({
             }[header.column.getIsSorted() as string] ?? <ArrowUpDown className="hidden group-hover:block transition ease-in-out duration-500"/>}
             </ToolTipButton>}
             {header.column.getCanFilter() &&  
-            <ToolTipButton content="Filter" className="group">
-              <ListFilter className="hidden group-hover:block transition ease-in-out duration-500"/>
-            </ToolTipButton>}
+            // <ToolTipButton content="Filter" className="group">
+            //   <ListFilter className="hidden group-hover:block transition ease-in-out duration-500"/>
+            // </ToolTipButton>
+            <TableFilter column={header.column}/>
+            }
             {header.column.getCanPin() &&
-            <ToolTipButton content="Pin" className="group" onClick={() => {
+            <ToolTipButton content={isPinned ? "Unpin" : "Pin"} className="group" onClick={() => {
               // console.log("isPinned:",isPinned)
               isPinned ? header.column.pin(false) : header.column.pin("left")
             }}>
-            {header.column.getIsPinned() ? <PinOff/> : <Pin className="hidden group-hover:block transition ease-in-out duration-500"/>}
+            {isPinned ? <PinOff/> : <Pin className="hidden group-hover:block transition ease-in-out duration-500"/>}
             </ToolTipButton>}
-            {!header.column.getIsPinned() && 
+            {!isPinned && 
             <ToolTipButton content="ReOrder" {...attributes} {...listeners} className="group" suppressHydrationWarning>
               <GripVertical className="hidden group-hover:block transition ease-in-out duration-500"/>
             </ToolTipButton>}
@@ -153,15 +161,17 @@ function DraggableTableHeader({
           />  
         </>}
       </div>
-      
-      {/* <button {...attributes} {...listeners} >
-        🟰
-      </button> */}
     </TableHead>
   )
 }
 
-function DraggableCell ({ cell }: { cell: Cell<any, unknown> }) {
+function DraggableCell ({ 
+  cell,
+  className,
+  ...props 
+}: { 
+  cell: Cell<any, unknown>, 
+} & React.ComponentProps<typeof TableCell>) {
   const { isDragging, setNodeRef, transform } = useSortable({
     id: cell.column.id,
   })
@@ -189,7 +199,8 @@ function DraggableCell ({ cell }: { cell: Cell<any, unknown> }) {
   }
 
   return (
-    <TableCell ref={setNodeRef} style={style} className={`${isPinned ? "bg-background" : ""}`}>
+    <TableCell ref={setNodeRef} style={style} 
+      className={cn(`${isPinned ? "bg-background" : ""}`, className)} {...props}>
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   )
@@ -198,12 +209,13 @@ function DraggableCell ({ cell }: { cell: Cell<any, unknown> }) {
 function ToolTipButton({
   children,
   content,
+  className,
   ...props
 } : { content?: string } & React.ComponentProps<typeof Button>) {
   return(
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant={"ghost"} className="size-4" {...props} >
+        <Button variant={"ghost"} className={cn("size-4", className)} {...props} >
           {children}
         </Button>
       </TooltipTrigger>
@@ -311,6 +323,32 @@ function TableSettings<TData>({table} : { table: TanStackTable<TData>}) {
   )
 }
 
+function TableFilter<TData, TValue>({
+  table,
+  column,
+} : { 
+  table?: TanStackTable<TData>,
+  column: Column<TData, TValue>,
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <ToolTipButton content="Filter" className="group">
+          <ListFilter className="hidden group-hover:block transition ease-in-out duration-500"/>
+        </ToolTipButton>
+      </PopoverTrigger>
+     <PopoverContent sideOffset={14} className="w-auto min-w-[640px]" showCloseButton>
+  
+      <div className="flex top-0 text-center sm:text-left leading-none font-semibold">Data Table Filter</div>
+      <div className="my-2 ring-1 rounded-sm ring-ring px-2">Filters</div>
+      <div className="flex items-center mt-2 justify-end">
+        <Button variant={"default"} >OK</Button>
+      </div>
+     </PopoverContent>
+    </Popover>
+  )
+}
+
 function IndeterminateCheckbox({
   indeterminate,
   className,
@@ -375,27 +413,29 @@ function getSystemColumnDef<TData, TValue>() : ColumnDef<TData, TValue>[] {
   return columns;
 }
 
+export type Mode = "server" | "client";
+
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  disabled?: boolean
+  columns: ColumnDef<TData, TValue>[],
+  data: TData[],
+  model: Mode | undefined,
 }
 
 function DataTable<TData, TValue>({
   columns,
   data,
-  disabled,
+  model,
 }: DataTableProps<TData, TValue>) {
   const tableColumns = React.useMemo<ColumnDef<TData, TValue>[]>(() => {
-    const checkColums = getSystemColumnDef<TData, TValue>();
-    return [...checkColums, ...columns];
+    const systemColumns = getSystemColumnDef<TData, TValue>();
+    return [...systemColumns, ...columns];
   },[columns]);
 
   // console.log(tableColumns);
 
   //reorder
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => {
-    return columns.map(c => c.id!)
+    return tableColumns.map(c => c.id!)
     // 先把 __select 放前面，再加上其他列
     // const allIds = tableColumns.map(c => c.id!);
     // // 确保 __select 在最前面
@@ -432,6 +472,8 @@ function DataTable<TData, TValue>({
   //column visibility
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
 
+  const isServerModel = model === "server"
+
   const table = useReactTable({
     data,
     columns: tableColumns,
@@ -446,18 +488,18 @@ function DataTable<TData, TValue>({
     enableRowSelection: true, //enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
 
-    // manualSorting: true, //we're doing manual "server-side" sorting
+    manualSorting: isServerModel, //we're doing manual "server-side" sorting
     getSortedRowModel: getSortedRowModel(), //client-side sorting
     onSortingChange: setSorting, //optionally control sorting state in your own scope for easy access
     // sortingFns: {
     //   sortStatusFn, //or provide our custom sorting function globally for all columns to be able to use
     // },
 
-    manualFiltering: true, //we're doing manual "server-side" filtering
+    manualFiltering: isServerModel, //we're doing manual "server-side" filtering
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(), //client side filtering
 
-    // manualPagination: true, //we're doing manual "server-side" pagination
+    manualPagination: isServerModel, //we're doing manual "server-side" pagination
     onPaginationChange: setPagination,
     getPaginationRowModel: getPaginationRowModel(), //client-side pagination
 
@@ -497,17 +539,21 @@ function DataTable<TData, TValue>({
   )
 
   return (
+    
     // NOTE: This provider creates div elements, so don"t nest inside of <table> elements
+    //key={`dnd-context-${table.getState().pagination.pageSize}`} Set a key to forces a fresh instance when page size changes,fix page size changes all columns become undraggable.
+    <div className="p-2 flex flex-col gap-1">
+        <TableSettings table={table}/>
+    <div className="overflow-hidden rounded-md border">
     <DndContext
+      key={`dnd-context-${table.getState().pagination.pageSize}`}
       collisionDetection={closestCenter}
       modifiers={[restrictToHorizontalAxis]}
       onDragEnd={handleColumnDragEnd}
       sensors={sensors}
     >
-      <div className="p-2 flex flex-col gap-1">
-        <TableSettings table={table}/>
         <Table className="table-fixed">
-          <TableHeader >
+          <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 <SortableContext
@@ -537,6 +583,8 @@ function DataTable<TData, TValue>({
             ))}
           </TableBody>
         </Table>
+    </DndContext>
+    </div>
         <div className="h-2" />
         <div className="flex items-center gap-2 justify-end">
           <Button
@@ -588,18 +636,6 @@ function DataTable<TData, TValue>({
               className="border p-1 rounded w-16 h-8"
             />
           </span>
-          {/* <select
-            value={table.getState().pagination.pageSize}
-            onChange={e => {
-              table.setPageSize(Number(e.target.value))
-            }}
-          >
-            {[10, 20, 30, 40, 50].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select> */}
           <Select value={table.getState().pagination.pageSize?.toString()} onValueChange={(pageSize) => {table.setPageSize(Number(pageSize))}}>
             <SelectTrigger size="sm" className="w-auto py-0 rounded">
               <SelectValue />
@@ -616,8 +652,9 @@ function DataTable<TData, TValue>({
           </Select>
         </div>
         <pre>{JSON.stringify(data, null, 2)}</pre>
-      </div>
-    </DndContext>
+     
+  
+    </div>
   )
 }
 

@@ -116,7 +116,7 @@ function PersonTableForm() {
   
   return (
     <div className="p-2">
-      <DataTable columns={columns} data={data}/>
+      <DataTable columns={columns} data={data} model={"client"}/>
       <Checkbox defaultChecked = "indeterminate"/>
     </div>
   )

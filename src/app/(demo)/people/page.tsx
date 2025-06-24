@@ -4,8 +4,8 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>
-      {/* <FormDist/> */}
+    <div className='select-none'>
+      <FormDist />
       <PersonTableForm/>
     </div>
   )
